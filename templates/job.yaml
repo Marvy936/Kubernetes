@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: simple-job
+  # namespace: default
+spec:
+  #  backoffLimit: 2
+  activeDeadlineSeconds: 10
+  template:
+    spec:
+      containers:
+      - name: this-is-test
+        image: alpine
+        command: [ "echo", "Hello world" ]
+      restartPolicy: Never # OnFailure
