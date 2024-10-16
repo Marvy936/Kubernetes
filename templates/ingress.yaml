@@ -5,7 +5,8 @@ metadata:
   # namespace: application
 spec:
   rules:
-  - http:
+  - host:
+    http:
       paths:
       - backend:
           service:
