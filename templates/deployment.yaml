@@ -18,6 +18,9 @@ spec:
       containers:
       - image: nginx:latest
         name: nginx
+        env:
+        - name: {VARIABLE_NAME}
+          value: {CUSTOM_VALUE}        
         envFrom:
         - configMapRef:
             name: app-config
