@@ -18,6 +18,9 @@ spec:
       containers:
       - image: nginx:latest
         name: nginx
+        volumeMounts:
+        - name: {VOLUME_NAME}
+          mountPath: /usr/share/nginx/html
       #  1. option ENV
         env:
         - name: {VARIABLE_NAME}
@@ -44,3 +47,7 @@ spec:
         envFrom:
         - secretRef:
             name: {secret_name}
+      volumes:
+      - name: {VOLUME_NAME}
+        emptyDir: {}
+          sizeLimit: 100Mi
