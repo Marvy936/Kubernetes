@@ -18,11 +18,29 @@ spec:
       containers:
       - image: nginx:latest
         name: nginx
+      #  1. option ENV
         env:
         - name: {VARIABLE_NAME}
-          value: {CUSTOM_VALUE}        
+          value: {CUSTOM_VALUE}     
+      #  2. option ENV
+        env:
+        - name: {VARIABLE_NAME}
+          valueFrom:
+            configMapKeyRef:
+              name: {confimap_name}
+              key: {VARIABLE_NAME}
+      #  3. option ENV - naming is required to be the same.
         envFrom:
         - configMapRef:
-            name: app-config
+            name: {confimap_name}
+      #  1. option SECRET
+        env:
+        - name: {VARIABLE_NAME}
+          valueFrom:
+            secretKeyRef:
+              name: {secret_name}
+              key: {VARIABLE_NAME}            
+      #  2. option SECRET - naming is required to be the same.
+        envFrom:
         - secretRef:
-            name: secrets
+            name: {secret_name}
