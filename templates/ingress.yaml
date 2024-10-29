@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-controller
+  name: ingress-controller # ingress name
   # namespace: application
 spec:
   rules:
@@ -10,8 +10,8 @@ spec:
       paths:
       - backend:
           service:
-            name: weather
+            name: weather # service name
             port:
-              number: 8000
-        path: /
-        pathType: Exact  # Prefix
+              number: 8000 # host port name
+        path: / # path
+        pathType: Prefix # Prefix / Exact
