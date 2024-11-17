@@ -1,9 +1,10 @@
+```
 kubectl version -> shows installed version.
 kubectl cluster-info -> shows cluster information.
 kubectl config view --raw -> shows config.
-
----- KUBERNETES PODS
-
+```
+### ---- KUBERNETES PODS
+```
 kubectl run {pod_name} --image bletvaska/weather -> run pod with desired name.
 --dry-run=client -> it doesn't really run the command or create the objects just test requriements for run.
 --output yaml -> ouput YAML file.
@@ -15,18 +16,18 @@ kubectl describe pods/{pod_name} -> shows pod information/configuration.
 kubectl get pods --watch -> live watching pods.
 kubectl exec pods/{pod_name} -- hostname -> show hostname.
 kubectl exec -it pods/{pod_name} -- bash -> opens interactive bash terminal.
-
----- KUBERNETES DEPLOYEMENTS
-
+```
+### ---- KUBERNETES DEPLOYEMENTS
+```
 kubectl create deployment {deployement_name} --image {image_name} -> create deployment from image.
 --replicas 5 -> create deployment with 5 replicas.
 kubectl delete deployements/{deployement_name} -> deletes deployement.
 kubectl delete deployements --all -> deletes all deployements.
 kubectl scale deploy/{deployement_name} --replicas 2 -> set to desired number of replicas to 2.
 kubectl set image deployments {deployement_name} {deployement_name}={image_name} -> update pod's image to other version.
-
----- KUBERNETES SERVICES
-
+```
+### ---- KUBERNETES SERVICES
+```
 kubectl port-forward pods/{pod_name} 8000:80 -> forwads pod IP to local IP.
 kubectl port-forward --address 0.0.0.0 pod/weather 8000:8000 - forwads pod IP to local IP, with 0.0.0.0 mask so you can connect from everywhere.
 kubectl expose pods/{pod_name} --port 9000,9001 -> create service and expose pod on ports 9000 and 9001.
@@ -39,29 +40,29 @@ kubectl expose deployment {deployement_name} -> create service for deployment.
 ClusterIP -> address inside cluster.
 NodePort -> address on cluster level. You can connect to cluster from everywhere even from outside, specific port will be assigned from range 30000 - 32767.
 LoadBalancer -> gets an external IP address.
-
----- KUBERNETES LABELS
-
+```
+### ---- KUBERNETES LABELS
+```
 kubectl get all --show-labels -> shows objects with labels.
 kubectl label pods {pod_name} org=shmu -> update label.
 kubectl delete deployments,services --selector enviroment=dev -> removes everything with that label.
-
----- KUBERNETES NAMESPACES
-
+```
+### ---- KUBERNETES NAMESPACES
+```
 kubectl get namespaces -> shows all namespaces.
 kubectl create namespace {namespace_name} -> create new namespace.
 kubectl config set-context --current --namespace {namespace_name} -> switch to desired namespace.
 ~/.kube/config -> path to config file, switch to desired namespace dirrecrtly in config file.
 kubectl delete namespace {namespace_name} -> deletes namespace.
-
----- KUBERNETES MANIFEST,VARIABLES,SECRETS
-
+```
+### ---- KUBERNETES MANIFEST,VARIABLES,SECRETS
+```
 kubectl apply -f manifest.yaml -> create deployment from manifest.
 --selector env=prod,customer=custA -> apply only on objects with these labels.
 kubectl set env deployment/{deployement_name} {VARIABLE_NAME}={VARIABLE_VALUE} -> sets enviroment variable to desired value.
-
----- KUBERNETES CONFIGMAP
-
+```
+### ---- KUBERNETES CONFIGMAP
+```
 kubectl create configmap {configmap_name} \ -> create configmap with variables and values lower.
   --from-literal=WEATHER_UPDATE_INTERVAL=30 \
   --from-literal=WEATHER_UNITS=standard \
@@ -93,9 +94,9 @@ ConfigMap Usage in Manifest:
                name: {configmap_name}
 
 kubectl delete configmap -> deletes configmap.
-
----- KUBERNETES SECRETS
-
+```
+### ---- KUBERNETES SECRETS
+```
 kubectl create secret generic {secret_name} -> create new secret with provided variables and values.
 --from-literal {VARIABLE_NAME}={VARIABLE_VALUE}
 
@@ -109,18 +110,18 @@ In secrets how to be values encrypted in base64.
 
 echo -n '{YOUR_VALUE}' | base64 -> to encrypt the value.
 echo -n '{YOUR_VALUE}' | base64 | base 64 --decode -> to decode the value.
-
----- KUBERNETES INGRESS
-
+```
+### ---- KUBERNETES INGRESS
+```
 kubectl create ingeress weather
 --rule /=weather:8000
 --rule /*=weather:8000
 
 kubectl describe ingress weather --namespace weather
 kubectl delete ingress weather
-
----- KUBERNETES PV,PVC
-
+```
+### ---- KUBERNETES PV,PVC
+```
 kubectl get pv
 kubectl get pvc
 
