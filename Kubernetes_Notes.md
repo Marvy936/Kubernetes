@@ -99,12 +99,38 @@ kubectl delete namespace {namespace_name}           # Deletes a namespace.
 
 ---
 
-## Kubernetes Manifest, Variables, and Secrets
+## Kubernetes Manifest
 
 ```bash
 kubectl apply -f manifest.yaml                      # Applies a manifest to create resources.
 --selector env=prod,customer=custA                 # Applies changes only to objects matching specific labels.
 kubectl set env deployment/{deployment_name} {VARIABLE_NAME}={VARIABLE_VALUE} # Sets environment variables.
+```
+
+Manifest example:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
 ```
 
 ---
