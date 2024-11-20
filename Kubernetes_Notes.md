@@ -29,17 +29,17 @@ kubectl config view --raw                  # Displays the raw configuration file
 ## Kubernetes Pods
 
 ```bash
-kubectl run {pod_name} --image {image_name} # Creates a pod with the specified name and image.
---dry-run=client                           # Tests the command without actually creating the pod.
---output yaml                              # Outputs the command as a YAML file.
-kubectl get pods                           # Lists all pods.
-kubectl get all                            # Lists all Kubernetes objects.
---namespace {namespace_name}              # Filters objects in a specific namespace.
-kubectl logs pods/{pod_name} --follow --tail 1 # Displays live logs (last line) of a pod.
-kubectl describe pods/{pod_name}          # Shows detailed information about a pod.
-kubectl get pods --watch                  # Monitors pod creation and deletion live.
-kubectl exec pods/{pod_name} -- hostname  # Executes a command inside the pod (e.g., `hostname`).
-kubectl exec -it pods/{pod_name} -- bash  # Opens an interactive bash shell inside the pod.
+kubectl run {pod_name} --image {image_name}     # Creates a pod with the specified name and image.
+--dry-run=client                                # Tests the command without actually creating the pod.
+--output yaml                                   # Outputs the command as a YAML file.
+kubectl get pods                                # Lists all pods.
+kubectl get all                                 # Lists all Kubernetes objects.
+--namespace {namespace_name}                    # Filters objects in a specific namespace.
+kubectl logs pods/{pod_name} --follow --tail 1  # Displays live logs (last line) of a pod.
+kubectl describe pods/{pod_name}                # Shows detailed information about a pod.
+kubectl get pods --watch                        # Monitors pod creation and deletion live.
+kubectl exec pods/{pod_name} -- hostname        # Executes a command inside the pod (e.g., `hostname`).
+kubectl exec -it pods/{pod_name} -- bash        # Opens an interactive bash shell inside the pod.
 ```
 
 ---
@@ -47,11 +47,11 @@ kubectl exec -it pods/{pod_name} -- bash  # Opens an interactive bash shell insi
 ## Kubernetes Deployments
 
 ```bash
-kubectl create deployment {deployment_name} --image {image_name} # Creates a deployment from an image.
---replicas 5                                                    # Specifies the number of replicas.
-kubectl delete deployments/{deployment_name}                   # Deletes a specific deployment.
-kubectl delete deployments --all                               # Deletes all deployments.
-kubectl scale deploy/{deployment_name} --replicas 2            # Scales a deployment to 2 replicas.
+kubectl create deployment {deployment_name} --image {image_name}               # Creates a deployment from an image.
+--replicas 5                                                                   # Specifies the number of replicas.
+kubectl delete deployments/{deployment_name}                                   # Deletes a specific deployment.
+kubectl delete deployments --all                                               # Deletes all deployments.
+kubectl scale deploy/{deployment_name} --replicas 2                            # Scales a deployment to 2 replicas.
 kubectl set image deployments/{deployment_name} {deployment_name}={image_name} # Updates the deployment's image.
 ```
 
@@ -60,14 +60,14 @@ kubectl set image deployments/{deployment_name} {deployment_name}={image_name} #
 ## Kubernetes Services
 
 ```bash
-kubectl port-forward pods/{pod_name} 8000:80                 # Forwards pod port 80 to localhost port 8000.
+kubectl port-forward pods/{pod_name} 8000:80                     # Forwards pod port 80 to localhost port 8000.
 kubectl port-forward --address 0.0.0.0 pods/{pod_name} 8000:8000 # Enables external access to the port.
-kubectl expose pods/{pod_name} --port 9000,9001             # Exposes a pod on specified ports.
-kubectl describe svc {service_name}                         # Displays details about a service.
-kubectl expose deployment {deployment_name}                # Exposes a deployment as a service.
---port 9000                                                # Host port.
---target-port 8000                                         # Application port within the container.
---type ClusterIP/NodePort/LoadBalancer                    # Specifies the service type.
+kubectl expose pods/{pod_name} --port 9000,9001                  # Exposes a pod on specified ports.
+kubectl describe svc {service_name}                              # Displays details about a service.
+kubectl expose deployment {deployment_name}                      # Exposes a deployment as a service.
+--port 9000                                                      # Host port.
+--target-port 8000                                               # Application port within the container.
+--type ClusterIP/NodePort/LoadBalancer                           # Specifies the service type.
 ```
 
 - **Service Types:**
@@ -80,8 +80,8 @@ kubectl expose deployment {deployment_name}                # Exposes a deploymen
 ## Kubernetes Labels
 
 ```bash
-kubectl get all --show-labels                        # Lists objects with their labels.
-kubectl label pods/{pod_name} org=shmu               # Adds or updates a label on a pod.
+kubectl get all --show-labels                                  # Lists objects with their labels.
+kubectl label pods/{pod_name} org=shmu                         # Adds or updates a label on a pod.
 kubectl delete deployments,services --selector environment=dev # Deletes objects with a specific label.
 ```
 
@@ -90,11 +90,11 @@ kubectl delete deployments,services --selector environment=dev # Deletes objects
 ## Kubernetes Namespaces
 
 ```bash
-kubectl get namespaces                               # Lists all namespaces.
-kubectl create namespace {namespace_name}           # Creates a new namespace.
+kubectl get namespaces                                            # Lists all namespaces.
+kubectl create namespace {namespace_name}                         # Creates a new namespace.
 kubectl config set-context --current --namespace {namespace_name} # Switches to a namespace.
-~/.kube/config                                       # Path to the kubeconfig file for manual edits.
-kubectl delete namespace {namespace_name}           # Deletes a namespace.
+~/.kube/config                                                    # Path to the kubeconfig file for manual edits.
+kubectl delete namespace {namespace_name}                         # Deletes a namespace.
 ```
 
 ---
@@ -102,8 +102,8 @@ kubectl delete namespace {namespace_name}           # Deletes a namespace.
 ## Kubernetes Manifest
 
 ```bash
-kubectl apply -f manifest.yaml                      # Applies a manifest to create resources.
---selector env=prod,customer=custA                 # Applies changes only to objects matching specific labels.
+kubectl apply -f manifest.yaml                                                # Applies a manifest to create resources.
+--selector env=prod,customer=custA                                            # Applies changes only to objects matching specific labels.
 kubectl set env deployment/{deployment_name} {VARIABLE_NAME}={VARIABLE_VALUE} # Sets environment variables.
 ```
 
@@ -140,9 +140,10 @@ spec:
 ### Creating a ConfigMap
 
 ```bash
-kubectl create configmap {configmap_name} \         # Creates a ConfigMap with specified variables.
+kubectl create configmap {configmap_name} \                            # Creates a ConfigMap with specified variables.
   --from-literal=WEATHER_UPDATE_INTERVAL=30 \      
-  --from-literal=WEATHER_UNITS=standard   --from-literal=WEATHER_QUERY=poprad,sk
+  --from-literal=WEATHER_UNITS=standard \
+  --from-literal=WEATHER_QUERY=poprad,sk
 
 kubectl create configmap {configmap_name} --from-env-file yourfile.env # Creates a ConfigMap from a file.
 ```
@@ -183,7 +184,7 @@ kubectl delete configmap {configmap_name}     # Deletes a ConfigMap.
 
 ```bash
 kubectl create secret generic {secret_name} --from-literal {VARIABLE_NAME}={VARIABLE_VALUE} # Creates a secret with variables.
-kubectl create secret generic {secret_name} --from-env-file yourfile.env # Creates a secret from a file.
+kubectl create secret generic {secret_name} --from-env-file yourfile.env                    # Creates a secret from a file.
 ```
 
 ### Managing Secrets
@@ -195,7 +196,7 @@ kubectl describe secrets {secret_name}         # Shows details of a specific sec
 
 - **Base64 Encoding for Secrets**:
   ```bash
-  echo -n '{YOUR_VALUE}' | base64             # Encodes a value to Base64.
+  echo -n '{YOUR_VALUE}' | base64                   # Encodes a value to Base64.
   echo -n '{YOUR_VALUE}' | base64 | base64 --decode # Decodes a Base64 value.
   ```
 
