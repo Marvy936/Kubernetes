@@ -205,7 +205,7 @@ kubectl describe secrets {secret_name}         # Shows details of a specific sec
 ## Kubernetes Ingress
 
 ```bash
-kubectl create ingress weather   --rule /=weather:8000   --rule /*=weather:8000
+kubectl create ingress weather --rule /=weather:8000 --rule /*=weather:8000
 
 kubectl describe ingress weather --namespace weather # Describes ingress in a specific namespace.
 kubectl delete ingress weather                       # Deletes an ingress resource.
