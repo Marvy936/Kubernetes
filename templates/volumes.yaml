@@ -1,0 +1,31 @@
+Create empty Dir inside container.
+
+
+```yaml    
+containers:
+- image: nginx
+  name: nginx
+  volumeMounts:
+    - name: storage
+      mountPath: /usr/share/nginx/html
+volumes:
+- name: storage
+  emptyDir: {} # remove {} if you are giving more parameters.
+    sizeLimit: 100Mi
+```
+
+Connects /tmp/www from host to container's /usr/share/nginx/html.
+
+```yaml    
+containers:
+- image: nginx
+  name: nginx
+  volumeMounts:
+    - name: storage
+      mountPath: /usr/share/nginx/html
+volumes:
+- name: storage
+  hostPath:
+    path: /tmp/www
+    type: DirectoryOrCreate
+```
