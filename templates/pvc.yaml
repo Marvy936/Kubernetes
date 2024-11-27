@@ -1,12 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: claim
-  # namespace: application
+  name: volume-claim
 spec:
-  storageClassName: "" # Empty string must be explicitly set otherwise default StorageClass will be set
-  accessModes:         # params
+  accessModes:
     - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Mi
+resources:
+  requests:
+    storage: 300Mi
