@@ -1,16 +1,16 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-controller # ingress name
-  # namespace: application
+  name: ingress-controller-minio
+  namespace: storage
 spec:
   rules:
-    http:
+  - http:
       paths:
-      - backend:
+      - path: /
+        pathType: Prefix
+        backend:
           service:
-            name: weather # service name
+            name: minio
             port:
-              number: 8000 # host port name
-        path: / # path
-        pathType: Prefix # Prefix / Exact
+              number: 9001
