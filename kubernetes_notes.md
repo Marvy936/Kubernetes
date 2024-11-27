@@ -203,6 +203,98 @@ spec:
 
 ```
 
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: minio
+  name: minio
+  namespace: storage
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+      - image: bitnami/minio
+        name: minio
+        env:
+        - name: MINIO_DEFAULT_BUCKETS
+          value: music,pictures,videos,books
+        - secretRef:
+          name: minio
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: minio
+  name: minio-cl
+  namespace: storage
+spec:
+  ports:
+  - name: port-1
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+  - name: port-2
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  selector:
+    app: minio
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: minio
+  name: minio-lb
+  namespace: storage
+spec:
+  ports:
+  - name: port-1
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+  - name: port-2
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  selector:
+    app: minio
+  type: ClusterIP
+  
+---
+  
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio
+  namespace: storage
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: minio-cl
+            port:
+              number: 9001
+        path: /
+        pathType: Prefix
+```
+
 ---
 
 ## Kubernetes ConfigMap
