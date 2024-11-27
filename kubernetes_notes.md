@@ -8,7 +8,7 @@
 4. [Kubernetes Services](#kubernetes-services)
 5. [Kubernetes Labels](#kubernetes-labels)
 6. [Kubernetes Namespaces](#kubernetes-namespaces)
-7. [Kubernetes Manifest, Variables, and Secrets](#kubernetes-manifest-variables-and-secrets)
+7. [Kubernetes Manifest, Variables, and Secrets](#kubernetes-manifest)
 8. [Kubernetes ConfigMap](#kubernetes-configmap)
 9. [Kubernetes Secrets](#kubernetes-secrets)
 10. [Kubernetes Ingress](#kubernetes-ingress)
