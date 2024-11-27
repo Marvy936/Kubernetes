@@ -113,24 +113,94 @@ Manifest example:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-deployment
   labels:
-    app: nginx
+    app: minio
+  name: minio
+  namespace: storage
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: nginx
+      app: minio
   template:
     metadata:
       labels:
-        app: nginx
+        app: minio
     spec:
       containers:
-      - name: nginx
-        image: nginx:1.14.2
-        ports:
-        - containerPort: 80
+      - image: bitnami/minio
+        name: minio
+        envFrom:
+        - configMapRef:
+            name: minio
+        - secretRef:
+            name: minio
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: minio
+  name: minio-cl
+  namespace: storage
+spec:
+  ports:
+  - name: port-1
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+  - name: port-2
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  selector:
+    app: minio
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: minio
+  name: minio-lb
+  namespace: storage
+spec:
+  ports:
+  - name: port-1
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+  - name: port-2
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  selector:
+    app: minio
+  type: LoadBalancer
+  
+---
+  
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio
+  namespace: storage
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: minio-cl
+            port:
+              number: 9001
+        path: /
+        pathType: Prefix
+
+
 ```
 
 ---
