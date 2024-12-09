@@ -13,6 +13,7 @@
 9. [Kubernetes Secrets](#kubernetes-secrets)
 10. [Kubernetes Ingress](#kubernetes-ingress)
 11. [Kubernetes Persistent Volumes and Claims (PV, PVC)](#kubernetes-persistent-volumes-and-claims-pv-pvc)
+12. [Examples](#examples)
 
 ---
 
@@ -291,3 +292,50 @@ kubectl get pvc                                   # Lists Persistent Volume Clai
 ---
 
 **Refer to templates for specific examples.**
+
+---
+
+# Examples
+
+deployment.yaml
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: deployment name
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginxdemos/hello
+        name: container name
+```
+
+service.yaml
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  ports:
+  - name: nginx-name
+    port: 8080
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+  type: LoadBalancer
+```
