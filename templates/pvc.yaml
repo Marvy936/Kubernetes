@@ -1,10 +1,22 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: volume-claim
+  name: volume-claim500mi
 spec:
   accessModes:
     - ReadWriteOnce
-resources:
-  requests:
-    storage: 300Mi
+  resources:
+    requests:
+      storage: 500Mi
+
+
+
+need to add: to your container
+
+   volumeMounts: # Mount PersistentVolumeClaim to the container
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-storage
+      volumes: # Declare volume to use PersistentVolumeClaim
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: volume-claim500mi
