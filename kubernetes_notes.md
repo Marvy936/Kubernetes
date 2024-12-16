@@ -339,3 +339,61 @@ spec:
     app: nginx
   type: LoadBalancer
 ```
+
+`deployment.yaml`
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-pod
+  name: nginx-pod
+  namespace: dev-environment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-pod
+  template:
+    metadata:
+      labels:
+        app: nginx-pod
+    spec:
+      containers:
+      - image: nginx:latest
+        name: nginx-pod
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "0.5"
+          limits:
+            memory: "128Mi"
+            cpu: "1"
+        volumeMounts:
+        - name: nginx-config-volume
+          mountPath: /usr/share/nginx/html
+          readOnly: true
+      volumes:
+      - name: nginx-config-volume
+        configMap:
+          name: nginx-config
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx-pod
+  name: nginx-service
+  namespace: dev-environment
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30000
+  selector:
+    app: nginx-pod
+  type: NodePort
+```
