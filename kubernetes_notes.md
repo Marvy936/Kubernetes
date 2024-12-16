@@ -297,7 +297,7 @@ kubectl get pvc                                   # Lists Persistent Volume Clai
 
 # Examples
 
-deployment.yaml
+`deployment.yaml`
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -321,7 +321,7 @@ spec:
         name: container name
 ```
 
-service.yaml
+`service.yaml`
 ```yaml
 apiVersion: v1
 kind: Service
@@ -339,6 +339,8 @@ spec:
     app: nginx
   type: LoadBalancer
 ```
+
+---
 
 `deployment.yaml`
 ```yaml
