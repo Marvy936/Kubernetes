@@ -71,11 +71,6 @@ kubectl expose deployment {deployment_name}                      # Exposes a dep
 --type ClusterIP/NodePort/LoadBalancer                           # Specifies the service type.
 ```
 
-- **Service Types:**
-  - **ClusterIP**: Accessible only within the cluster.
-  - **NodePort**: Exposes the service on a cluster-wide port (30000-32767).
-  - **LoadBalancer**: Provides an external IP address.
-
 ---
 
 ## Kubernetes Labels
@@ -107,8 +102,215 @@ kubectl apply -f manifest.yaml                                                # 
 --selector env=prod,customer=custA                                            # Applies changes only to objects matching specific labels.
 kubectl set env deployment/{deployment_name} {VARIABLE_NAME}={VARIABLE_VALUE} # Sets environment variables.
 ```
+## Kubernetes Authentication
 
-Manifest example:
+kube config for authentication service account
+
+	vytvorit variable bud file kubeconfig cely alebo service account token protected variable
+
+	before script
+    - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config # $KUBE_CONFIG is a GitLab variable
+
+
+MORE MORE MORE
+
+## Kubernetes Services
+
+TargetPort is what is your application listening what is coded inside the POD on your image.
+
+No TargetPort = Port
+
+ClusterIP:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  selector:
+    app: my-app
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+```
+
+http://<service-name>.<namespace>.svc.cluster.local:8080/api/data - DNS name for internal communication (different namespaces)
+http://<service-name>:8080/api/data - DNS name for internal communication (same namespace)
+
+<service-name>: This is the metadata.name you define in your Service YAML manifest. For example, in our previous example, the service name was backend-service.
+
+<namespace>: This is the name of the namespace the service is in. For a service in the default namespace, the name would be default. For a service in the backend-ns namespace, it would be backend-ns.
+
+svc: This is a required part of the FQDN and stands for "service". It tells the DNS resolver that this is a query for a Kubernetes service.
+
+cluster.local: This is the default cluster domain. It's automatically configured for your cluster and is the root of the Kubernetes DNS hierarchy.
+
+8080/api/data: Your port and path, optional. 
+
+NodePort:
+
+port.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-nodeport-service
+spec:
+  selector:
+    app: my-app
+  type: NodePort
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+    nodePort: 30005 # Remove if you want auto assign of IP
+```
+
+The "Port" part: A specific port is opened on the host (the node).
+The "Node" part: This port is open on every node, regardless of whether a pod for that service is running on that particular node.
+
+Port Range: The NodePort must be in a specific, predefined range. By default, this range is 30000-32767.
+
+Exposed on All Nodes: This is a major point of consideration. The port is open on every node's IP address. This means you need to be careful with your network security and firewall rules.
+
+LoadBalancer:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-loadbalancer-service
+spec:
+  selector:
+    app: my-app
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+```
+
+External IP from cloud provider. Without external IP it still works internally.
+
+ExternalName:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-legacy-api
+spec:
+  type: ExternalName
+  externalName: legacy-api.example.com
+```
+
+What it is: An ExternalName service is a non-proxying service. It doesn't have a ClusterIP, and it doesn't select pods. Instead, it creates a DNS CNAME record that points to an external FQDN.
+
+How it works: When a client pod tries to access an ExternalName service, the DNS query is resolved directly to the external hostname. Kubernetes doesn't forward any traffic; it just provides a DNS alias.
+
+Ingress:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-app-service
+            port:
+              number: 80
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: path-based-ingress
+spec:
+  rules:
+  - host: myapp.example.com #Use when you have DNS record.
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+```
+
+With this configuration:
+
+A request to http://myapp.example.com/api/users will be routed to the api-service.
+
+A request to http://myapp.example.com/ will be routed to the frontend-service.
+
+A request to http://myapp.example.com/about will also be routed to the frontend-service because / is a prefix match for everything that doesn't match the more specific /api.
+
+pathType Options
+
+pathType is a key field that determines how the path is matched. There are three options:
+
+Prefix (Most Common):
+
+Behavior: Matches based on a URL path prefix. The path must be a prefix of the URL path being requested.
+
+Example:
+
+path: /api will match /api, /api/v1, and /api/users.
+
+path: / will match / and any other path that starts with /.
+
+Note: When using multiple Prefix paths, the most specific one is always chosen. The Ingress Controller will try to match the longest path first.
+
+Exact:
+
+Behavior: Matches the URL path exactly, case-sensitively.
+
+Example:
+
+path: /contact will only match /contact. It will not match /contact/us.
+
+Use case: Use this when you have a specific, singular endpoint that you want to route.
+
+AUTHERNTICATION
+kube config for authentication service account
+
+	vytvorit variable bud file kubeconfig cely alebo service account token protected variable
+
+	before script
+    - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config # $KUBE_CONFIG is a GitLab variable
+
+
+
+
+
+
 
 ```yaml
 apiVersion: apps/v1
