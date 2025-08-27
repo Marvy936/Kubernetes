@@ -268,6 +268,7 @@ Example:
 --from-file=.dockerconfigjson=docker-config.json \
 --type=kubernetes.io/dockerconfigjson \
 ```
+
 Manifest Example:
 
 ```yaml
@@ -280,6 +281,7 @@ type: kubernetes.io/dockerconfigjson
 data:
   .dockerconfigjson: "$DOCKER_AUTH_JSON"
 ```
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -294,11 +296,9 @@ spec:
     metadata:
       labels:
         app: my-app
-    spec:
-### THIS PART IS FOR SECRET
-      imagePullSecrets:
-      - name: my-private-registry-secret
-### 
+    spec:                                  # This Part
+      imagePullSecrets:                    # This Part
+      - name: my-private-registry-secret   # This Part
       containers:
       - name: my-app-container
         image: moje-meno-pouzivatela/moj-sukromny-obraz:latest
