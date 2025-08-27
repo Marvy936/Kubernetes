@@ -107,58 +107,19 @@ kubectl set env deployment/{deployment_name} {VARIABLE_NAME}={VARIABLE_VALUE} # 
 ```
 
 ## Kubernetes Rollback
-
+```kubectl rollout undo is the command used to rollback a Kubernetes Deployment, StatefulSet, or DaemonSet to a previous version.```
 ```
-Performing a rollback is a critical feature in Kubernetes, and it's a common task you'll want to automate in your CI/CD pipeline. Kubernetes manages rollbacks through the Deployment object.
-When you run kubectl apply to update a Deployment, Kubernetes creates a new "revision." This allows you to easily revert to a previous state if the new version of your application has issues.
+kubectl rollout history deployment/my-app
+kubectl rollout undo deployment/my-app
+kubectl rollout undo deployment/my-app --to-revision=2
+kubectl rollout status deployment/my-app
 ```
-The primary command for a rollback is:
-```bash
-kubectl rollout undo.
-```
-Check the Rollout History:
-```bash
-kubectl rollout history deployment/your-deployment-name
-```
-Before you roll back, it's good practice to inspect the history of your Deployment. This will show you all the revisions that have been created.
 
-Bash
 
-kubectl rollout history deployment/your-deployment-name
 
-The output will show you a list of revisions with a number (e.g., REVISION 1, REVISION 2). You can also get more details on a specific revision:
 
-Bash
 
-kubectl rollout history deployment/your-deployment-name --revision=2
 
-Step 2: Undo the Last Rollout
-
-To revert to the immediately previous revision, you simply use the undo command without any extra flags.
-Bash
-
-kubectl rollout undo deployment/your-deployment-name
-
-Kubernetes will then begin a new rollout that replaces the current Pods with the Pods from the previous revision. This is often the most common type of rollback.
-
-Step 3: Undo to a Specific Revision
-
-If you want to roll back to a specific, older revision (for example, two versions ago), you can specify the revision number using the --to-revision flag.
-
-Bash
-
-kubectl rollout undo deployment/your-deployment-name --to-revision=1
-
-Other Useful Kubernetes Features and Commands
-
-Beyond rollbacks, here are some other powerful features you should know for your CI/CD pipelines:
-
-1. Checking the Status of a Rollout
-
-As we discussed earlier, the kubectl rollout status command is essential for CI/CD. It allows your pipeline to wait until a new version of your application is fully deployed and ready before marking the job as successful.
-Bash
-
-kubectl rollout status deployment/your-deployment-name
 
 2. Managing Environment-Specific Configurations
 
