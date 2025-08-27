@@ -413,7 +413,20 @@ spec:
       periodSeconds: 5
 ```
 
+```yaml
+spec:
+  containers:
+  - name: my-app
+    image: my-app:latest
+    livenessProbe:
+    	httpGet:
+    		path: /healthz
+            port: 8080
+    	initialDelaySeconds: 15
+    	periodSeconds: 20
+```yaml
 
+	
 vytvorit cluster a ako na tom aby som vedel 
 
 
