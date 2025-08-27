@@ -209,7 +209,7 @@ deploy_job:
   script:
     - echo "$KUBE_CONFIG" > /tmp/kubeconfig
     - export KUBECONFIG=/tmp/kubeconfig
-	- kubectl config get-contexts
+    - kubectl config get-contexts
     - kubectl apply -f deployment.yaml
     - rm /tmp/kubeconfig
 ```
