@@ -100,10 +100,9 @@ kubectl delete namespace {namespace_name}                         	# Deletes a n
 
 ```bash
 kubectl apply -f manifest.yaml                                                # Applies a manifest to create resources.
---selector env=prod,customer=custA                                            # Applies changes only to objects matching specific labels. If I have different deployments with different labels in one manifest.!!!!!!!!!
+--selector env=prod,customer=custA                                            # Applies changes only to objects matching specific labels. **If I have different deployments with different labels in one manifest.**
 --dry-run=server
-kubectl apply --prune -f manifests/ --selector app=my-app 		delete all resoucres with label my-app which are not declared on manifest
-
+kubectl apply --prune -f manifests/ --selector app=my-app 					  # Delete all resoucres with label my-app which are not declared on manifest.
 kubectl set env deployment/{deployment_name} {VARIABLE_NAME}={VARIABLE_VALUE} # Sets environment variables.
 ```
 
