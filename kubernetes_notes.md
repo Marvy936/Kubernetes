@@ -61,14 +61,14 @@ kubectl set image deployments/{deployment_name} {deployment_name}={image_name} #
 ## Kubernetes Services
 
 ```bash
-kubectl port-forward pods/{pod_name} 8000:80                     # Forwards pod port 80 to localhost port 8000.
-kubectl port-forward --address 0.0.0.0 pods/{pod_name} 8000:8000 # Enables external access to the port.
-kubectl expose pods/{pod_name} --port 9000,9001                  # Exposes a pod on specified ports.
-kubectl describe svc {service_name}                              # Displays details about a service.
-kubectl expose deployment {deployment_name}                      # Exposes a deployment as a service.
---port 9000                                                      # Host port.
---target-port 8000                                               # Application port within the container.
---type ClusterIP/NodePort/LoadBalancer                           # Specifies the service type.
+kubectl port-forward pods/{pod_name} 8000:80                     	# Forwards pod port 80 to localhost port 8000.
+kubectl port-forward --address 0.0.0.0 pods/{pod_name} 8000:8000 	# Enables external access to the port.
+kubectl expose pods/{pod_name} --port 9000,9001                  	# Exposes a pod on specified ports.
+kubectl describe svc {service_name}                              	# Displays details about a service.
+kubectl expose deployment {deployment_name}                      	# Exposes a deployment as a service.
+--port 9000                                                      	# Host port.
+--target-port 8000                                               	# Application port within the container.
+--type ClusterIP/NodePort/LoadBalancer                           	# Specifies the service type.
 ```
 
 ---
@@ -76,9 +76,9 @@ kubectl expose deployment {deployment_name}                      # Exposes a dep
 ## Kubernetes Labels
 
 ```bash
-kubectl get all --show-labels                                  # Lists objects with their labels.
-kubectl label pods/{pod_name} org=shmu                         # Adds or updates a label on a pod.
-kubectl delete deployments,services --selector environment=dev # Deletes objects with a specific label.
+kubectl get all --show-labels                                  		# Lists objects with their labels.
+kubectl label pods/{pod_name} org=shmu                         		# Adds or updates a label on a pod.
+kubectl delete deployments,services --selector environment=dev 		# Deletes objects with a specific label.
 ```
 
 ---
@@ -86,11 +86,11 @@ kubectl delete deployments,services --selector environment=dev # Deletes objects
 ## Kubernetes Namespaces
 
 ```bash
-kubectl get namespaces                                            # Lists all namespaces.
-kubectl create namespace {namespace_name}                         # Creates a new namespace.
-kubectl config set-context --current --namespace {namespace_name} # Switches to a namespace.
-~/.kube/config                                                    # Path to the kubeconfig file for manual edits.
-kubectl delete namespace {namespace_name}                         # Deletes a namespace.
+kubectl get namespaces                                            	# Lists all namespaces.
+kubectl create namespace {namespace_name}                        	# Creates a new namespace.
+kubectl config set-context --current --namespace {namespace_name} 	# Switches to a namespace.
+~/.kube/config                                                    	# Path to the kubeconfig file for manual edits.
+kubectl delete namespace {namespace_name}                         	# Deletes a namespace.
 ```
 
 ---
@@ -106,22 +106,71 @@ kubectl apply --prune -f manifests/ --selector app=my-app 		delete all resoucres
 kubectl set env deployment/{deployment_name} {VARIABLE_NAME}={VARIABLE_VALUE} # Sets environment variables.
 ```
 
+---
+
 ## Kubernetes Rollback
-```kubectl rollout undo is the command used to rollback a Kubernetes Deployment, StatefulSet, or DaemonSet to a previous version.```
-```
+
+```bash
 kubectl rollout history deployment/my-app
 kubectl rollout undo deployment/my-app
 kubectl rollout undo deployment/my-app --to-revision=2
 kubectl rollout status deployment/my-app
 ```
 
+---
+
+## Kubernetes Gitlab connect to cluster
 
 
+```
+You need kubeconfig file and store it as variable in GITLAB $KUBE_CONFIG.
+As Text:
+$KUBE_CONFIG - Text Variable in Gitlab, Masked
+If it was decoded: echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+```
 
+Gitlab:
 
+```yaml
+stages:
+  - deploy
 
+deploy_job:
+  stage: deploy
+  image: alpine/k8s:1.24.1
+  script:
+    - echo "$KUBE_CONFIG" > /tmp/kubeconfig
+    - export KUBECONFIG=/tmp/kubeconfig
+	- kubectl config get-contexts
+    - kubectl apply -f deployment.yaml
+    - rm /tmp/kubeconfig
+```
 
-2. Managing Environment-Specific Configurations
+```
+You need kubeconfig file and store it as variable in GITLAB $KUBE_CONFIG.
+As File:
+$KUBE_CONFIG - File Variable in Gitlab, Masked
+```
+
+Gitlab:
+
+```yaml
+stages:
+  - deploy
+
+deploy_job:
+  stage: deploy
+  image: alpine/k8s:1.24.1 # Prípadne iný obraz s kubectl
+  variables:
+    KUBECONFIG: $KUBE_CONFIG
+  script:
+    - kubectl config get-contexts
+    - kubectl apply -f deployment.yaml
+```
+
+## Kubernetes Gitlab connect to cluster
+
+2. ConfigMaps
 
 You can use ConfigMaps and Secrets to store configuration data and sensitive information (like passwords or API keys) separately from your application code and Docker image.
 
@@ -386,54 +435,7 @@ By combining these methods, you can gain a lot of control over the commands that
 
 
 
-## Kubernetes Authentication to Cluster
 
-Ak sa chcem z runnera pripojit priamo na cluster v gitlabe aby som spustal prikazy tam kde mam musim si ulozit do variables v gitlabe bud ako file subor kubeconfig, pri vytvoreni clustera vznikne alebo jeho obsah ako text vsetko masked
-
-Text:
-$KUBE_CONFIG - Variabilna v Gitlabe ako Text masked
-Ak bol decoeded musim pouzit - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config # $KUBE_CONFIG is a GitLab variable
-
-Gitlab:
-```
-stages:
-  - deploy
-
-deploy_job:
-  stage: deploy
-  image: alpine/k8s:1.24.1
-  script:
-    - echo "$KUBE_CONFIG" > /tmp/kubeconfig
-    - export KUBECONFIG=/tmp/kubeconfig
-	- kubectl config get-contexts
-    - kubectl apply -f deployment.yaml
-    - rm /tmp/kubeconfig
-```
-
-File:
-$KUBE_CONFIG - Subor kubeconfig masked
-
-Gitlab:
-```
-stages:
-  - deploy
-
-deploy_job:
-  stage: deploy
-  image: alpine/k8s:1.24.1 # Prípadne iný obraz s kubectl
-  variables:
-    KUBECONFIG: $KUBE_CONFIG
-  script:
-    - kubectl config get-contexts
-    - kubectl apply -f deployment.yaml
-
-
-kube config for authentication service account
-
-	vytvorit variable bud file kubeconfig cely alebo service account token protected variable
-
-	before script
-    - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config # $KUBE_CONFIG is a GitLab variable
 
 
 MORE MORE MORE
