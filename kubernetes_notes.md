@@ -105,16 +105,21 @@ kubectl apply --prune -f manifests/ --selector app=my-app 		delete all resoucres
 
 kubectl set env deployment/{deployment_name} {VARIABLE_NAME}={VARIABLE_VALUE} # Sets environment variables.
 ```
+
+## Kubernetes Rollback
+
+```
 Performing a rollback is a critical feature in Kubernetes, and it's a common task you'll want to automate in your CI/CD pipeline. Kubernetes manages rollbacks through the Deployment object.
-
-How to Perform a Rollback
-
 When you run kubectl apply to update a Deployment, Kubernetes creates a new "revision." This allows you to easily revert to a previous state if the new version of your application has issues.
-
-The primary command for a rollback is kubectl rollout undo.
-
-Step 1: Check the Rollout History
-
+```
+The primary command for a rollback is:
+```bash
+kubectl rollout undo.
+```
+Check the Rollout History:
+```bash
+kubectl rollout history deployment/your-deployment-name
+```
 Before you roll back, it's good practice to inspect the history of your Deployment. This will show you all the revisions that have been created.
 
 Bash
