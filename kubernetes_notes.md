@@ -197,7 +197,7 @@ $KUBE_CONFIG - Text Variable in Gitlab, Masked
 If it was decoded: echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
 ```
 
-Gitlab:
+Gitlab (AS TEXT):
 
 ```yaml
 stages:
@@ -220,7 +220,7 @@ As File:
 $KUBE_CONFIG - File Variable in Gitlab, Masked
 ```
 
-Gitlab:
+Gitlab (AS FILE):
 
 ```yaml
 stages:
