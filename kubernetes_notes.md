@@ -230,7 +230,7 @@ spec:
             name: my-app-service
             port:
               number: 80
-
+```
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
