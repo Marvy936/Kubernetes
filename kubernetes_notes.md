@@ -417,10 +417,9 @@ spec:
 vytvorit cluster a ako na tom aby som vedel 
 
 
-kážka kompletného Deployment manifestu
+Ukazka Deploymentu
 
-YAML
-
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -469,30 +468,7 @@ spec:
 
       # Voľby pre restart
       restartPolicy: Always
-
-Vysvetlenie jednotlivých sekcií:
-
-metadata
-
-    name: Názov vášho Deploymentu.
-
-    labels: Návestia, ktoré slúžia na organizáciu a identifikáciu Deploymentu v rámci klastra. V tomto prípade ide o aplikáciu my-web-app a prostredie prod.
-
-spec
-
-    replicas: Určuje, koľko kópií (pods) vašej aplikácie má bežať. V tomto prípade tri.
-
-    selector: Vraví Deploymentu, ktoré pods má spravovať.
-
-    template: Šablóna, z ktorej sa vytvárajú nové pods.
-
-
-
-
-
-
-
-
+```
 
 
 
