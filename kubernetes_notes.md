@@ -37,6 +37,7 @@ kubectl get pods                                # Lists all pods.
 kubectl get all                                 # Lists all Kubernetes objects.
 --namespace {namespace_name}                    # Filters objects in a specific namespace.
 kubectl logs pods/{pod_name} --follow --tail 1  # Displays live logs (last line) of a pod.
+kubectl logs -l app=your-app-label				# Get logs for all Pods in a Deployment (useful for CI/CD debugging).
 kubectl describe pods/{pod_name}                # Shows detailed information about a pod.
 kubectl get pods --watch                        # Monitors pod creation and deletion live.
 kubectl exec pods/{pod_name} -- hostname        # Executes a command inside the pod (e.g., `hostname`).
@@ -108,6 +109,176 @@ kubectl set env deployment/{deployment_name} {VARIABLE_NAME}={VARIABLE_VALUE} # 
 
 ---
 
+## Kubernetes Services
+
+```
+TargetPort is what is your application listening what is coded inside the POD on your image.
+No TargetPort = Port
+```
+
+ClusterIP:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  selector:
+    app: my-app
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+```
+
+```
+http://<service-name>.<namespace>.svc.cluster.local:8080/api/data - DNS name for internal communication (different namespaces)
+http://<service-name>:8080/api/data - DNS name for internal communication (same namespace)
+```
+```
+<service-name>: This is the metadata.name you define in your Service YAML manifest. For example, in our previous example, the service name was backend-service.
+<namespace>: This is the name of the namespace the service is in. For a service in the default namespace, the name would be default. For a service in the backend-ns namespace, it would be backend-ns.
+svc: This is a required part of the FQDN and stands for "service". It tells the DNS resolver that this is a query for a Kubernetes service.
+cluster.local: This is the default cluster domain. It's automatically configured for your cluster and is the root of the Kubernetes DNS hierarchy.
+8080/api/data: Your port and path, optional. 
+```
+
+NodePort:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-nodeport-service
+spec:
+  selector:
+    app: my-app
+  type: NodePort
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+    nodePort: 30005 # Remove if you want auto assign of IP
+```
+```
+The "Port" part: A specific port is opened on the host (the node).
+The "Node" part: This port is open on every node, regardless of whether a pod for that service is running on that particular node.
+Port Range: The NodePort must be in a specific, predefined range. By default, this range is 30000-32767.
+Exposed on All Nodes: This is a major point of consideration. The port is open on every node's IP address. This means you need to be careful with your network security and firewall rules.
+```
+
+LoadBalancer:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-loadbalancer-service
+spec:
+  selector:
+    app: my-app
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+```
+```
+External IP from cloud provider. Without external IP it still works internally.
+```
+
+ExternalName:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-legacy-api
+spec:
+  type: ExternalName
+  externalName: legacy-api.example.com
+```
+```
+What it is: An ExternalName service is a non-proxying service. It doesn't have a ClusterIP, and it doesn't select pods. Instead, it creates a DNS CNAME record that points to an external FQDN.
+How it works: When a client pod tries to access an ExternalName service, the DNS query is resolved directly to the external hostname. Kubernetes doesn't forward any traffic; it just provides a DNS alias.
+```
+
+Ingress:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-app-service
+            port:
+              number: 80
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: path-based-ingress
+spec:
+  rules:
+  - host: myapp.example.com #Use when you have DNS record.
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+```
+With this configuration:
+```
+A request to http://myapp.example.com/api/users will be routed to the api-service.
+A request to http://myapp.example.com/ will be routed to the frontend-service.
+A request to http://myapp.example.com/about will also be routed to the frontend-service because / is a prefix match for everything that doesn't match the more specific /api.
+```
+pathType is a key field that determines how the path is matched. There are three options:
+Prefix (Most Common):
+```
+Behavior: Matches based on a URL path prefix. The path must be a prefix of the URL path being requested.
+Example:
+path: /api will match /api, /api/v1, and /api/users.
+path: / will match / and any other path that starts with /.
+Note: When using multiple Prefix paths, the most specific one is always chosen. The Ingress Controller will try to match the longest path first.
+```
+Exact:
+```
+Behavior: Matches the URL path exactly, case-sensitively.
+Example:
+path: /contact will only match /contact. It will not match /contact/us.
+Use case: Use this when you have a specific, singular endpoint that you want to route.
+```
+
 ## Kubernetes Rollback
 
 ```bash
@@ -168,75 +339,43 @@ deploy_job:
     - kubectl apply -f deployment.yaml
 ```
 
-## Kubernetes Gitlab connect to cluster
+---
 
-2. ConfigMaps
-
-You can use ConfigMaps and Secrets to store configuration data and sensitive information (like passwords or API keys) separately from your application code and Docker image.
-
-    kubectl apply -f configmap.yaml: Deploys a ConfigMap.
-
-    kubectl create secret generic my-secret --from-literal=key=value: Creates a secret from a literal value.
-
-Storing configs this way makes your pipeline more flexible and secure. You can have a single Deployment manifest that uses different ConfigMaps or Secrets depending on the environment (e.g., dev, staging, prod).
-
-3. Scaling Your Application
-
-You can use kubectl scale to easily change the number of running Pods for your application. This can be useful for performance testing or for handling spikes in traffic.
-Bash
-
-# Set the number of replicas for a Deployment to 3
-kubectl scale deployment/your-deployment-name --replicas=3
-
-4. Getting Live Logs
-
-When debugging a failing deployment, the kubectl logs command is invaluable.
-Bash
-
-# Get logs for a specific Pod
-kubectl logs your-pod-name
-
-# Get logs for all Pods in a Deployment (useful for CI/CD debugging)
-kubectl logs -l app=your-app-label
-
-These commands, combined with a well-structured pipeline, can help you manage your applications in Kubernetes with confidence.
-
-
-Executing Commands on Startup or Before Shutdown
+## Executing Commands on Startup or Before Shutdown
 
 Kubernetes has a few different ways to run commands within a container at key moments.
-
-1. command and args
-
 The most common way is to define the entry point and arguments for your container directly in your Deployment manifest.
-
-    command: This overrides the default ENTRYPOINT in your Docker image. It's the primary command that will be executed when the container starts.
-
-    args: These are the arguments passed to the command.
-
+```
+command: This overrides the default ENTRYPOINT in your Docker image. It's the primary command that will be executed when the container starts.
+args: These are the arguments passed to the command.
+```
 Example:
 If your Docker image doesn't have a default entry point, you could use command to start a shell and then run your script.
 YAML
 
+```yaml
 spec:
   containers:
   - name: my-app
     image: my-app:latest
     command: ["/bin/sh", "-c"] # Overrides default entrypoint
     args: ["/app/startup.sh"]   # Passes a script as an argument
+```
 
-2. lifecycle Hooks
+---
+
+## Lifecycle hooks
 
 Lifecycle hooks let you run a command after a container is created or before it's terminated.
-
-    postStart Hook: This hook is executed immediately after a container is created. It's useful for running initial setup commands that your application needs before it can start serving traffic. For example, you could run a database migration script.
-
-    preStop Hook: This hook is executed just before a container is terminated. It's perfect for a graceful shutdown, like draining connections or cleaning up temporary files.
-
+```
+postStart Hook: This hook is executed immediately after a container is created. It's useful for running initial setup commands that your application needs before it can start serving traffic. For example, you could run a database migration script.
+preStop Hook: This hook is executed just before a container is terminated. It's perfect for a graceful shutdown, like draining connections or cleaning up temporary files.
+```
 Example:
 This manifest uses a postStart hook to run a script and a preStop hook to send a termination signal.
 YAML
 
+```yaml
 spec:
   containers:
   - name: my-app
@@ -248,21 +387,22 @@ spec:
       preStop:
         exec:
           command: ["/bin/sh", "-c", "echo 'Shutting down gracefully...' && sleep 10"]
+```
 
-Verifying Readiness with Probes
+---
+
+## Verifying Readiness with Probes
 
 You can also use probes to execute commands and verify that your application is running correctly. Probes check the state of your application and can affect how Kubernetes manages traffic and restarts.
-
-1. readinessProbe
-
 This probe checks if your container is ready to accept incoming traffic. If a readinessProbe fails, Kubernetes won't send requests to the container.
-
-    How it works: You can define a command that Kubernetes will execute periodically. If the command exits with a status code of 0, the container is considered ready. If it returns a non-zero code, it's not ready.
-
+```
+How it works: You can define a command that Kubernetes will execute periodically. If the command exits with a status code of 0, the container is considered ready. If it returns a non-zero code, it's not ready.
+```
 Example:
 This probe checks if a file exists, indicating that the application is ready.
 YAML
 
+```yaml
 spec:
   containers:
   - name: my-app
@@ -272,9 +412,7 @@ spec:
         command: ["cat", "/tmp/ready.txt"]
       initialDelaySeconds: 5
       periodSeconds: 5
-
-By combining these methods, you can gain a lot of control over the commands that run as part of your application's lifecycle, which is essential for managing complex applications and ensuring smooth, reliable deployments.
-
+```
 
 
 vytvorit cluster a ako na tom aby som vedel 
@@ -352,285 +490,9 @@ spec
 
 
 
-Yes, absolutely. In Kubernetes, you can execute commands or scripts when a deployment is made using lifecycle hooks and probes. These features let you run specific actions at different stages of a container's life.
 
-Executing Commands on Startup or Before Shutdown
 
-Kubernetes has a few different ways to run commands within a container at key moments.
 
-1. command and args
-
-The most common way is to define the entry point and arguments for your container directly in your Deployment manifest.
-
-    command: This overrides the default ENTRYPOINT in your Docker image. It's the primary command that will be executed when the container starts.
-
-    args: These are the arguments passed to the command.
-
-Example:
-If your Docker image doesn't have a default entry point, you could use command to start a shell and then run your script.
-YAML
-
-spec:
-  containers:
-  - name: my-app
-    image: my-app:latest
-    command: ["/bin/sh", "-c"] # Overrides default entrypoint
-    args: ["/app/startup.sh"]   # Passes a script as an argument
-
-2. lifecycle Hooks
-
-Lifecycle hooks let you run a command after a container is created or before it's terminated.
-
-    postStart Hook: This hook is executed immediately after a container is created. It's useful for running initial setup commands that your application needs before it can start serving traffic. For example, you could run a database migration script.
-
-    preStop Hook: This hook is executed just before a container is terminated. It's perfect for a graceful shutdown, like draining connections or cleaning up temporary files.
-
-Example:
-This manifest uses a postStart hook to run a script and a preStop hook to send a termination signal.
-YAML
-
-spec:
-  containers:
-  - name: my-app
-    image: my-app:latest
-    lifecycle:
-      postStart:
-        exec:
-          command: ["/bin/sh", "-c", "echo 'Container started, running setup script.' && /app/setup-database.sh"]
-      preStop:
-        exec:
-          command: ["/bin/sh", "-c", "echo 'Shutting down gracefully...' && sleep 10"]
-
-Verifying Readiness with Probes
-
-You can also use probes to execute commands and verify that your application is running correctly. Probes check the state of your application and can affect how Kubernetes manages traffic and restarts.
-
-1. readinessProbe
-
-This probe checks if your container is ready to accept incoming traffic. If a readinessProbe fails, Kubernetes won't send requests to the container.
-
-    How it works: You can define a command that Kubernetes will execute periodically. If the command exits with a status code of 0, the container is considered ready. If it returns a non-zero code, it's not ready.
-
-Example:
-This probe checks if a file exists, indicating that the application is ready.
-YAML
-
-spec:
-  containers:
-  - name: my-app
-    image: my-app:latest
-    readinessProbe:
-      exec:
-        command: ["cat", "/tmp/ready.txt"]
-      initialDelaySeconds: 5
-      periodSeconds: 5
-
-By combining these methods, you can gain a lot of control over the commands that run as part of your application's lifecycle, which is essential for managing complex applications and ensuring smooth, reliable deployments.
-
-
-
-
-
-
-
-
-
-
-
-
-MORE MORE MORE
-
-## Kubernetes Services
-
-TargetPort is what is your application listening what is coded inside the POD on your image.
-
-No TargetPort = Port
-
-ClusterIP:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-app-service
-spec:
-  selector:
-    app: my-app
-  type: ClusterIP
-  ports:
-  - name: http
-    port: 80
-    targetPort: 80
-    protocol: TCP
-  - name: metrics
-    port: 9090
-    targetPort: 9090
-    protocol: TCP
-```
-
-http://<service-name>.<namespace>.svc.cluster.local:8080/api/data - DNS name for internal communication (different namespaces)
-http://<service-name>:8080/api/data - DNS name for internal communication (same namespace)
-
-<service-name>: This is the metadata.name you define in your Service YAML manifest. For example, in our previous example, the service name was backend-service.
-
-<namespace>: This is the name of the namespace the service is in. For a service in the default namespace, the name would be default. For a service in the backend-ns namespace, it would be backend-ns.
-
-svc: This is a required part of the FQDN and stands for "service". It tells the DNS resolver that this is a query for a Kubernetes service.
-
-cluster.local: This is the default cluster domain. It's automatically configured for your cluster and is the root of the Kubernetes DNS hierarchy.
-
-8080/api/data: Your port and path, optional. 
-
-NodePort:
-
-port.
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-app-nodeport-service
-spec:
-  selector:
-    app: my-app
-  type: NodePort
-  ports:
-  - name: http
-    port: 80
-    targetPort: 80
-    protocol: TCP
-    nodePort: 30005 # Remove if you want auto assign of IP
-```
-
-The "Port" part: A specific port is opened on the host (the node).
-The "Node" part: This port is open on every node, regardless of whether a pod for that service is running on that particular node.
-
-Port Range: The NodePort must be in a specific, predefined range. By default, this range is 30000-32767.
-
-Exposed on All Nodes: This is a major point of consideration. The port is open on every node's IP address. This means you need to be careful with your network security and firewall rules.
-
-LoadBalancer:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-app-loadbalancer-service
-spec:
-  selector:
-    app: my-app
-  type: LoadBalancer
-  ports:
-  - name: http
-    port: 80
-    targetPort: 80
-    protocol: TCP
-```
-
-External IP from cloud provider. Without external IP it still works internally.
-
-ExternalName:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-legacy-api
-spec:
-  type: ExternalName
-  externalName: legacy-api.example.com
-```
-
-What it is: An ExternalName service is a non-proxying service. It doesn't have a ClusterIP, and it doesn't select pods. Instead, it creates a DNS CNAME record that points to an external FQDN.
-
-How it works: When a client pod tries to access an ExternalName service, the DNS query is resolved directly to the external hostname. Kubernetes doesn't forward any traffic; it just provides a DNS alias.
-
-Ingress:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: my-app-ingress
-spec:
-  rules:
-  - http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: my-app-service
-            port:
-              number: 80
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: path-based-ingress
-spec:
-  rules:
-  - host: myapp.example.com #Use when you have DNS record.
-    http:
-      paths:
-      - path: /api
-        pathType: Prefix
-        backend:
-          service:
-            name: api-service
-            port:
-              number: 8080
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend-service
-            port:
-              number: 80
-```
-
-With this configuration:
-
-A request to http://myapp.example.com/api/users will be routed to the api-service.
-
-A request to http://myapp.example.com/ will be routed to the frontend-service.
-
-A request to http://myapp.example.com/about will also be routed to the frontend-service because / is a prefix match for everything that doesn't match the more specific /api.
-
-pathType Options
-
-pathType is a key field that determines how the path is matched. There are three options:
-
-Prefix (Most Common):
-
-Behavior: Matches based on a URL path prefix. The path must be a prefix of the URL path being requested.
-
-Example:
-
-path: /api will match /api, /api/v1, and /api/users.
-
-path: / will match / and any other path that starts with /.
-
-Note: When using multiple Prefix paths, the most specific one is always chosen. The Ingress Controller will try to match the longest path first.
-
-Exact:
-
-Behavior: Matches the URL path exactly, case-sensitively.
-
-Example:
-
-path: /contact will only match /contact. It will not match /contact/us.
-
-Use case: Use this when you have a specific, singular endpoint that you want to route.
-
-AUTHERNTICATION
-kube config for authentication service account
-
-	vytvorit variable bud file kubeconfig cely alebo service account token protected variable
-
-	before script
-    - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config # $KUBE_CONFIG is a GitLab variable
 
 
 
