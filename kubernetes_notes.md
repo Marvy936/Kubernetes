@@ -157,11 +157,12 @@ kubectl get secrets                            # Lists all secrets.
 kubectl describe secrets {secret_name}         # Shows details of a specific secret.
 ```
 
-- **Base64 Encoding for Secrets**:
-  ```bash
-  echo -n '{YOUR_VALUE}' | base64                   # Encodes a value to Base64.
-  echo -n '{YOUR_VALUE}' | base64 | base64 --decode # Decodes a Base64 value.
-  ```
+**Base64 Encoding for Secrets**
+
+```bash
+echo -n '{YOUR_VALUE}' | base64                   # Encodes a value to Base64.
+echo -n '{YOUR_VALUE}' | base64 | base64 --decode # Decodes a Base64 value.
+```
 
 ---
 
