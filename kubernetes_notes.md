@@ -108,8 +108,214 @@ kubectl set env deployment/{deployment_name} {VARIABLE_NAME}={VARIABLE_VALUE} # 
 
 ---
 
+## Kubernetes Rollback
+
+```bash
+kubectl rollout history deployment/my-app
+kubectl rollout undo deployment/my-app
+kubectl rollout undo deployment/my-app --to-revision=2
+kubectl rollout status deployment/my-app
+```
+
+---
+
+## Kubernetes ConfigMap
+
+### Creating a ConfigMap
+
+```bash
+kubectl create configmap {configmap_name} \                # Creates a ConfigMap with specified variables.
+  --from-literal=WEATHER_UPDATE_INTERVAL=30 \      
+  --from-literal=WEATHER_UNITS=standard \
+  --from-literal=WEATHER_QUERY=poprad,sk
+
+kubectl create configmap {configmap_name} --from-env-file yourfile.env # Creates a ConfigMap from a file.
+```
+
+**Example `yourfile.env`**
+```env
+WEATHER_UPDATE_INTERVAL=30
+WEATHER_UNITS=standard 
+WEATHER_QUERY=poprad,sk
+```
+
+---
+
+## Kubernetes Secrets
+
+### Creating Secrets
+
+```bash
+kubectl create secret generic {secret_name} --from-literal {VARIABLE_NAME}={VARIABLE_VALUE} # Creates a secret with variables.
+kubectl create secret generic {secret_name} --from-env-file yourfile.env                    # Creates a secret from a file.
+```
+
+### Managing Secrets
+
+```bash
+kubectl get secrets                            # Lists all secrets.
+kubectl describe secrets {secret_name}         # Shows details of a specific secret.
+```
+
+- **Base64 Encoding for Secrets**:
+  ```bash
+  echo -n '{YOUR_VALUE}' | base64                   # Encodes a value to Base64.
+  echo -n '{YOUR_VALUE}' | base64 | base64 --decode # Decodes a Base64 value.
+  ```
+
+---
+
+## Kubernetes Ingress
+
+```bash
+kubectl create ingress weather --rule /=weather:8000 --rule /*=weather:8000
+
+kubectl describe ingress weather --namespace weather # Describes ingress in a specific namespace.
+kubectl delete ingress weather                       # Deletes an ingress resource.
+```
+
+---
+
+## Kubernetes Persistent Volumes and Claims (PV, PVC)
+
+```bash
+kubectl get pv                                    # Lists Persistent Volumes (PVs).
+kubectl get pvc                                   # Lists Persistent Volume Claims (PVCs).
+```
+
+---
+
+## Creating and maintaining Cluster.
+ADD
+## Kubernetes Gitlab connect to cluster
+
+```
+You need kubeconfig file and store it as variable in GITLAB $KUBE_CONFIG.
+As Text:
+$KUBE_CONFIG - Text Variable in Gitlab, Masked
+If it was decoded: echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+```
+
+Gitlab:
+
+```yaml
+stages:
+  - deploy
+
+deploy_job:
+  stage: deploy
+  image: alpine/k8s:1.24.1
+  script:
+    - echo "$KUBE_CONFIG" > /tmp/kubeconfig
+    - export KUBECONFIG=/tmp/kubeconfig
+	- kubectl config get-contexts
+    - kubectl apply -f deployment.yaml
+    - rm /tmp/kubeconfig
+```
+
+```
+You need kubeconfig file and store it as variable in GITLAB $KUBE_CONFIG.
+As File:
+$KUBE_CONFIG - File Variable in Gitlab, Masked
+```
+
+Gitlab:
+
+```yaml
+stages:
+  - deploy
+
+deploy_job:
+  stage: deploy
+  image: alpine/k8s:1.24.1 # Prípadne iný obraz s kubectl
+  variables:
+    KUBECONFIG: $KUBE_CONFIG
+  script:
+    - kubectl config get-contexts
+    - kubectl apply -f deployment.yaml
+```
+
+---
+
+## Kubernetes Gitlab Using Private Repository
+$DOCKER_SERVER, USER etc. are saved in Gitlab CI/CD variables.
+
+```bash
+- kubectl create secret docker-registry private-registry-secret \
+--docker-server=$DOCKER_SERVER \
+--docker-username=$DOCKER_USER \
+--docker-password=$DOCKER_PASSWORD 
+```
+
+If we have "$DOCKER_CONFIG_JSON” variable in Gitlab
+Example:
+```json
+{
+  "auths": {
+    "https://index.docker.io/v1/": {
+      "auth": "dGhpcyBpcyBhIHNhbXBsZSBhdXRoIHN0cmluZw==",
+      "email": "jan.novak@example.com"
+    }
+  }
+}
+```json
+
+```bash
+- echo "$DOCKER_CONFIG_JSON" > docker-config.json
+- kubectl create secret generic my-private-registry-secret \
+--from-file=.dockerconfigjson=docker-config.json \
+--type=kubernetes.io/dockerconfigjson \
+```
+Manifest Example:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-private-registry-secret
+  namespace: <tvoj-namespace>
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: "$DOCKER_AUTH_JSON"
+```
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      imagePullSecrets:
+      - name: my-private-registry-secret
+      containers:
+      - name: my-app-container
+        image: moje-meno-pouzivatela/moj-sukromny-obraz:latest
+        ports:
+        - containerPort: 80
+```
+
+## Kubernetes Deployment
+
 ## Kubernetes Services
 
+```bash
+kubectl port-forward pods/{pod_name} 8000:80                     	# Forwards pod port 80 to localhost port 8000.
+kubectl port-forward --address 0.0.0.0 pods/{pod_name} 8000:8000 	# Enables external access to the port.
+kubectl expose pods/{pod_name} --port 9000,9001                  	# Exposes a pod on specified ports.
+kubectl describe svc {service_name}                              	# Displays details about a service.
+kubectl expose deployment {deployment_name}                      	# Exposes a deployment as a service.
+--port 9000                                                      	# Host port.
+--target-port 8000                                               	# Application port within the container.
+--type ClusterIP/NodePort/LoadBalancer                           	# Specifies the service type.
+```
+---
 ```
 TargetPort is what is your application listening what is coded inside the POD on your image.
 No TargetPort = Port
@@ -277,67 +483,82 @@ Example:
 path: /contact will only match /contact. It will not match /contact/us.
 Use case: Use this when you have a specific, singular endpoint that you want to route.
 ```
+---
 
-## Kubernetes Rollback
+### Creating and using ConfigMap in a Manifest
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: default
+data:
+  database_url: "jdbc:postgresql://postgres-service:5432/myapp"
+  log_level: "INFO"
+  app_settings: | # multi-line example
+    server:
+      port: 8080
+      timeout: 30s
+    features:
+      enable_beta_feature: false
+```
+
+```yaml
+env:                                          # Sets individual variables.
+- name: {VARIABLE_NAME}
+  valueFrom:
+    configMapKeyRef:
+      name: {configmap_name}
+      key: {VARIABLE_NAME}
+
+envFrom:                                      # Loads all variables from a ConfigMap.
+- configMapRef:
+    name: {configmap_name}
+```
 
 ```bash
-kubectl rollout history deployment/my-app
-kubectl rollout undo deployment/my-app
-kubectl rollout undo deployment/my-app --to-revision=2
-kubectl rollout status deployment/my-app
+kubectl get configmaps                        # Lists all ConfigMaps.
+kubectl describe configmaps {configmap_name}  # Shows details of a specific ConfigMap.
+kubectl delete configmap {configmap_name}     # Deletes a ConfigMap.
 ```
 
 ---
 
-## Kubernetes Gitlab connect to cluster
+## Kubernetes Secrets
 
+### Creating Secrets
 
+```bash
+kubectl create secret generic {secret_name} --from-literal {VARIABLE_NAME}={VARIABLE_VALUE} # Creates a secret with variables.
+kubectl create secret generic {secret_name} --from-env-file yourfile.env                    # Creates a secret from a file.
 ```
-You need kubeconfig file and store it as variable in GITLAB $KUBE_CONFIG.
-As Text:
-$KUBE_CONFIG - Text Variable in Gitlab, Masked
-If it was decoded: echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+
+### Managing Secrets
+
+```bash
+kubectl get secrets                            # Lists all secrets.
+kubectl describe secrets {secret_name}         # Shows details of a specific secret.
 ```
 
-Gitlab:
+- **Base64 Encoding for Secrets**:
+  ```bash
+  echo -n '{YOUR_VALUE}' | base64                   # Encodes a value to Base64.
+  echo -n '{YOUR_VALUE}' | base64 | base64 --decode # Decodes a Base64 value.
+  ```
+
 
 ```yaml
-stages:
-  - deploy
-
-deploy_job:
-  stage: deploy
-  image: alpine/k8s:1.24.1
-  script:
-    - echo "$KUBE_CONFIG" > /tmp/kubeconfig
-    - export KUBECONFIG=/tmp/kubeconfig
-	- kubectl config get-contexts
-    - kubectl apply -f deployment.yaml
-    - rm /tmp/kubeconfig
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials-plain
+  namespace: default
+type: Opaque
+stringData:
+  username: admin
+  password: s3cr3t_p@ss
 ```
-
-```
-You need kubeconfig file and store it as variable in GITLAB $KUBE_CONFIG.
-As File:
-$KUBE_CONFIG - File Variable in Gitlab, Masked
-```
-
-Gitlab:
-
-```yaml
-stages:
-  - deploy
-
-deploy_job:
-  stage: deploy
-  image: alpine/k8s:1.24.1 # Prípadne iný obraz s kubectl
-  variables:
-    KUBECONFIG: $KUBE_CONFIG
-  script:
-    - kubectl config get-contexts
-    - kubectl apply -f deployment.yaml
-```
-
 ---
 
 ## Executing Commands on Startup or Before Shutdown
@@ -362,7 +583,6 @@ spec:
 ```
 
 ---
-
 ## Lifecycle hooks
 
 Lifecycle hooks let you run a command after a container is created or before it's terminated.
@@ -425,355 +645,3 @@ spec:
     	initialDelaySeconds: 15
     	periodSeconds: 20
 ```yaml
-
-	
-vytvorit cluster a ako na tom aby som vedel 
-
-
-Ukazka Deploymentu
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-web-app
-  labels:
-    app: my-web-app
-    env: prod
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: my-web-app
-  template:
-    metadata:
-      labels:
-        app: my-web-app
-    spec:
-      containers:
-      - name: my-web-app-container
-        image: your-docker-registry/my-web-app:1.0.0
-        ports:
-        - containerPort: 8080
-
-        # Sekcie pre Startup Commands a Probes
-        lifecycle:
-          postStart:
-            exec:
-              command: ["/bin/sh", "-c", "echo 'Running database migrations...' && /usr/local/bin/migrate.sh"]
-          preStop:
-            exec:
-              command: ["/bin/sh", "-c", "echo 'Shutting down gracefully...' && sleep 10"]
-
-        # Probes na kontrolu stavu
-        readinessProbe:
-          httpGet:
-            path: /healthz
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8080
-          initialDelaySeconds: 15
-          periodSeconds: 20
-
-      # Voľby pre restart
-      restartPolicy: Always
-```
-
-
-
-
-
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: minio
-  name: minio
-  namespace: storage
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: minio
-  template:
-    metadata:
-      labels:
-        app: minio
-    spec:
-      containers:
-      - image: bitnami/minio
-        name: minio
-        env:
-        - name: MINIO_DEFAULT_BUCKETS
-          value: music,pictures,videos,books
-        - secretRef:
-          name: minio
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: minio
-  name: minio-cl
-  namespace: storage
-spec:
-  ports:
-  - name: port-1
-    port: 9000
-    protocol: TCP
-    targetPort: 9000
-  - name: port-2
-    port: 9001
-    protocol: TCP
-    targetPort: 9001
-  selector:
-    app: minio
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: minio
-  name: minio-lb
-  namespace: storage
-spec:
-  ports:
-  - name: port-1
-    port: 9000
-    protocol: TCP
-    targetPort: 9000
-  - name: port-2
-    port: 9001
-    protocol: TCP
-    targetPort: 9001
-  selector:
-    app: minio
-  type: ClusterIP
-  
----
-  
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: minio
-  namespace: storage
-spec:
-  rules:
-  - http:
-      paths:
-      - backend:
-          service:
-            name: minio-cl
-            port:
-              number: 9001
-        path: /
-        pathType: Prefix
-```
-
----
-
-## Kubernetes ConfigMap
-
-### Creating a ConfigMap
-
-```bash
-kubectl create configmap {configmap_name} \                            # Creates a ConfigMap with specified variables.
-  --from-literal=WEATHER_UPDATE_INTERVAL=30 \      
-  --from-literal=WEATHER_UNITS=standard \
-  --from-literal=WEATHER_QUERY=poprad,sk
-
-kubectl create configmap {configmap_name} --from-env-file yourfile.env # Creates a ConfigMap from a file.
-```
-
-**Example `yourfile.env`**
-```env
-WEATHER_UPDATE_INTERVAL=30
-WEATHER_UNITS=standard 
-WEATHER_QUERY=poprad,sk
-```
-
-### Using a ConfigMap in a Manifest
-
-```yaml
-env:                                          # Sets individual variables.
-- name: {VARIABLE_NAME}
-  valueFrom:
-    configMapKeyRef:
-      name: {configmap_name}
-      key: {VARIABLE_NAME}
-
-envFrom:                                      # Loads all variables from a ConfigMap.
-- configMapRef:
-    name: {configmap_name}
-```
-
-```bash
-kubectl get configmaps                        # Lists all ConfigMaps.
-kubectl describe configmaps {configmap_name}  # Shows details of a specific ConfigMap.
-kubectl delete configmap {configmap_name}     # Deletes a ConfigMap.
-```
-
----
-
-## Kubernetes Secrets
-
-### Creating Secrets
-
-```bash
-kubectl create secret generic {secret_name} --from-literal {VARIABLE_NAME}={VARIABLE_VALUE} # Creates a secret with variables.
-kubectl create secret generic {secret_name} --from-env-file yourfile.env                    # Creates a secret from a file.
-```
-
-### Managing Secrets
-
-```bash
-kubectl get secrets                            # Lists all secrets.
-kubectl describe secrets {secret_name}         # Shows details of a specific secret.
-```
-
-- **Base64 Encoding for Secrets**:
-  ```bash
-  echo -n '{YOUR_VALUE}' | base64                   # Encodes a value to Base64.
-  echo -n '{YOUR_VALUE}' | base64 | base64 --decode # Decodes a Base64 value.
-  ```
-
----
-
-## Kubernetes Ingress
-
-```bash
-kubectl create ingress weather --rule /=weather:8000 --rule /*=weather:8000
-
-kubectl describe ingress weather --namespace weather # Describes ingress in a specific namespace.
-kubectl delete ingress weather                       # Deletes an ingress resource.
-```
-
----
-
-## Kubernetes Persistent Volumes and Claims (PV, PVC)
-
-```bash
-kubectl get pv                                    # Lists Persistent Volumes (PVs).
-kubectl get pvc                                   # Lists Persistent Volume Claims (PVCs).
-```
-
----
-
-**Refer to templates for specific examples.**
-
----
-
-# Examples
-
-`deployment.yaml`
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: nginx
-  name: deployment name
-
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-      - image: nginxdemos/hello
-        name: container name
-```
-
-`service.yaml`
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: nginx
-  name: nginx
-spec:
-  ports:
-  - name: nginx-name
-    port: 8080
-    protocol: TCP
-    targetPort: 80
-  selector:
-    app: nginx
-  type: LoadBalancer
-```
-
----
-
-`deployment.yaml`
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: nginx-pod
-  name: nginx-pod
-  namespace: dev-environment
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: nginx-pod
-  template:
-    metadata:
-      labels:
-        app: nginx-pod
-    spec:
-      containers:
-      - image: nginx:latest
-        name: nginx-pod
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "0.5"
-          limits:
-            memory: "128Mi"
-            cpu: "1"
-        volumeMounts:
-        - name: nginx-config-volume
-          mountPath: /usr/share/nginx/html
-          readOnly: true
-      volumes:
-      - name: nginx-config-volume
-        configMap:
-          name: nginx-config
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: nginx-pod
-  name: nginx-service
-  namespace: dev-environment
-spec:
-  ports:
-  - name: http
-    port: 80
-    protocol: TCP
-    targetPort: 80
-    nodePort: 30000
-  selector:
-    app: nginx-pod
-  type: NodePort
-```
