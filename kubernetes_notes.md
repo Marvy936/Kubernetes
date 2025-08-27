@@ -17,7 +17,9 @@
 
 ---
 
-## General Commands
+## Useful Commands
+### General Commands
+
 
 ```bash
 kubectl version                            # Shows installed version of kubectl.
@@ -27,7 +29,7 @@ kubectl config view --raw                  # Displays the raw configuration file
 
 ---
 
-## Kubernetes Pods
+### Kubernetes Pods
 
 ```bash
 kubectl run {pod_name} --image {image_name}     # Creates a pod with the specified name and image.
@@ -46,7 +48,7 @@ kubectl exec -it pods/{pod_name} -- bash        # Opens an interactive bash shel
 
 ---
 
-## Kubernetes Deployments
+### Kubernetes Deployments
 
 ```bash
 kubectl create deployment {deployment_name} --image {image_name}               # Creates a deployment from an image.
@@ -59,7 +61,7 @@ kubectl set image deployments/{deployment_name} {deployment_name}={image_name} #
 
 ---
 
-## Kubernetes Services
+### Kubernetes Services
 
 ```bash
 kubectl port-forward pods/{pod_name} 8000:80                     	# Forwards pod port 80 to localhost port 8000.
@@ -74,7 +76,7 @@ kubectl expose deployment {deployment_name}                      	# Exposes a de
 
 ---
 
-## Kubernetes Labels
+### Kubernetes Labels
 
 ```bash
 kubectl get all --show-labels                                  		# Lists objects with their labels.
@@ -84,7 +86,7 @@ kubectl delete deployments,services --selector environment=dev 		# Deletes objec
 
 ---
 
-## Kubernetes Namespaces
+### Kubernetes Namespaces
 
 ```bash
 kubectl get namespaces                                            	# Lists all namespaces.
@@ -96,7 +98,7 @@ kubectl delete namespace {namespace_name}                         	# Deletes a n
 
 ---
 
-## Kubernetes Manifest
+### Kubernetes Manifest
 
 ```bash
 kubectl apply -f manifest.yaml                                                # Applies a manifest to create resources.
@@ -119,9 +121,7 @@ kubectl rollout status deployment/my-app
 
 ---
 
-## Kubernetes ConfigMap
-
-### Creating a ConfigMap
+### Kubernetes ConfigMap
 
 ```bash
 kubectl create configmap {configmap_name} \                # Creates a ConfigMap with specified variables.
@@ -141,9 +141,7 @@ WEATHER_QUERY=poprad,sk
 
 ---
 
-## Kubernetes Secrets
-
-### Creating Secrets
+### Kubernetes Secrets
 
 ```bash
 kubectl create secret generic {secret_name} --from-literal {VARIABLE_NAME}={VARIABLE_VALUE} # Creates a secret with variables.
@@ -166,7 +164,7 @@ echo -n '{YOUR_VALUE}' | base64 | base64 --decode # Decodes a Base64 value.
 
 ---
 
-## Kubernetes Ingress
+### Kubernetes Ingress
 
 ```bash
 kubectl create ingress weather --rule /=weather:8000 --rule /*=weather:8000
@@ -177,7 +175,7 @@ kubectl delete ingress weather                       # Deletes an ingress resour
 
 ---
 
-## Kubernetes Persistent Volumes and Claims (PV, PVC)
+### Kubernetes Persistent Volumes and Claims (PV, PVC)
 
 ```bash
 kubectl get pv                                    # Lists Persistent Volumes (PVs).
@@ -307,7 +305,7 @@ spec:
 ```
 
 ## Kubernetes Deployment
-
+ADD
 ## Kubernetes Services
 
 ```bash
