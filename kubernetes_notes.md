@@ -250,6 +250,7 @@ $DOCKER_SERVER, USER etc. are saved in Gitlab CI/CD variables.
 
 If we have "$DOCKER_CONFIG_JSON” variable in Gitlab
 Example:
+
 ```json
 {
   "auths": {
@@ -259,7 +260,7 @@ Example:
     }
   }
 }
-```json
+```
 
 ```bash
 - echo "$DOCKER_CONFIG_JSON" > docker-config.json
@@ -268,6 +269,7 @@ Example:
 --type=kubernetes.io/dockerconfigjson \
 ```
 Manifest Example:
+
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -293,8 +295,10 @@ spec:
       labels:
         app: my-app
     spec:
+### THIS PART IS FOR SECRET
       imagePullSecrets:
       - name: my-private-registry-secret
+### 
       containers:
       - name: my-app-container
         image: moje-meno-pouzivatela/moj-sukromny-obraz:latest
