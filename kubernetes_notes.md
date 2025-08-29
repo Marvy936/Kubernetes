@@ -185,7 +185,181 @@ kubectl get pvc                                   # Lists Persistent Volume Clai
 ---
 
 ## Creating and maintaining Cluster.
-ADD
+
+Scenario: You have two VMs in the cloud, and you want to set up a Kubernetes cluster on them. Since Kubernetes needs at least one control plane (master) node and one or more worker nodes, your two VMs can work like this:
+
+VM1 → Control plane (master)
+VM2 → Worker node
+
+🔹 1. Prepare Both VMs
+
+Run on both VM1 and VM2:
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Disable swap (required for Kubernetes)
+sudo swapoff -a
+sudo sed -i '/ swap / s/^/#/' /etc/fstab
+
+# Load required modules
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+# Configure networking
+cat <<EOF | sudo tee /etc/sysctl.d/kubernetes.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+
+sudo sysctl --system
+```
+
+🔹 2. Install Container Runtime (Containerd recommended)
+
+On both VMs:
+```bash
+sudo apt install -y containerd
+```
+
+Configure containerd:
+```bash
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml
+sudo systemctl restart containerd
+sudo systemctl enable containerd
+```
+
+🔹 3. Install kubeadm, kubelet, kubectl
+
+On both VMs:
+```bash
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl
+
+sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | \
+  sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
+https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /" | \
+  sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+```
+
+🔹 4. Initialize Control Plane (on VM1)
+
+```bash
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+```
+```bash
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+
+🔹 5. Install Network Plugin
+
+For Flannel:
+```bash
+kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+```
+(You can also use Calico or Cilium, but Flannel is simplest.)
+
+🔹 6. Join Worker Node (VM2)
+
+On VM1 you’ll see a kubeadm join command at the end of kubeadm init output.
+Something like:
+```bash
+kubeadm join <MASTER_IP>:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+```
+Run that command on VM2.
+If you lost the token, regenerate it on VM1:
+```bash
+kubeadm token create --print-join-command
+```
+
+🔹 7. Verify Cluster
+On VM1:
+```bash
+kubectl get nodes
+```
+
+You should see:
+
+```
+NAME     STATUS   ROLES           AGE   VERSION
+vm1      Ready    control-plane   XXm   v1.31.x
+vm2      Ready    <none>          XXm   v1.31.x
+```
+
+Networking and firewall:
+
+🔹 Required Kubernetes Ports
+
+(from Kubernetes official docs)
+
+Between control plane (VM1) and workers (VM2):
+
+```
+6443/tcp → Kubernetes API server (all nodes need to reach this on the control-plane node).
+
+10250/tcp → Kubelet API (control plane ↔ worker communication).
+
+10259/tcp, 10257/tcp → kube-scheduler, kube-controller-manager (only needed if running multiple control-plane nodes, so for your 2-node setup not critical).
+
+8472/udp → Flannel VXLAN (if you use Flannel networking).
+
+179/tcp → (only if using Calico BGP).
+
+4789/udp → (if using Cilium with VXLAN).
+
+Node-to-node traffic (Pods, Services):
+
+30000–32767/tcp → NodePort services (if you expose services via NodePort).
+
+All traffic inside Pod network CIDR (e.g. 10.244.0.0/16 for Flannel) → must be allowed between VMs.
+```
+
+🔹 Cloud Firewall / Security Groups
+
+In your cloud provider, check firewall rules or security groups.
+You need at least:
+
+VM1 (control plane) inbound:
+```
+6443/tcp open to VM2 (and your own IP if you want kubectl access).
+```
+VM1 ↔ VM2:
+```
+Allow pod CIDR traffic (default Flannel = 10.244.0.0/16).
+
+Allow Kubernetes service CIDR traffic.
+
+Allow required kubelet + overlay network ports (10250/tcp, 8472/udp, etc.).
+```
+
+🔹 Optional (for external access)
+
+```
+If you want to reach workloads from the internet:
+
+Ingress controller (usually on ports 80/tcp and 443/tcp).
+
+Or use a LoadBalancer service if your cloud provider supports it.
+
+Or open NodePort range (30000–32767/tcp).
+```
+
+For running only single node cluster you have to remove taint from master node:
+
+```bash
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+```
+
 ## Kubernetes Gitlab connect to cluster
 
 ```
