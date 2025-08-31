@@ -1311,3 +1311,95 @@ spec:
         requests:
           storage: 1Gi
 ```
+
+1️⃣ Init Containers
+
+Čo to je:
+Init container je špeciálny kontajner, ktorý sa spustí pred hlavným (app) kontajnerom v pod-e. Kubernetes garantuje, že init container dokončí svoju prácu úspešne, než sa spustí hlavný kontajner.
+
+Použitie:
+```
+Inicializácia dát (napr. stiahnutie konfigurácie alebo databázových schém)
+Čakanie na dostupnosť externých služieb (napr. iný microservice alebo databáza)
+Nastavenie oprávnení alebo volume súborov
+Príklad manifestu (skrátka verzia):
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: init-example
+spec:
+  initContainers:
+  - name: init-myservice
+    image: busybox
+    command: ['sh', '-c', 'echo "Initializing..." > /work-dir/init.txt']
+    volumeMounts:
+    - name: workdir
+      mountPath: /work-dir
+  containers:
+  - name: main-app
+    image: nginx
+    volumeMounts:
+    - name: workdir
+      mountPath: /usr/share/nginx/html
+  volumes:
+  - name: workdir
+    emptyDir: {}
+```
+Vysvetlenie:
+```
+Init container zapíše súbor init.txt do zdieľaného volume.
+Hlavný nginx kontajner má prístup k tomuto súboru.
+```
+
+2️⃣ Sidecar Containers
+
+Čo to je:
+Sidecar container je kontajner, ktorý beží vedľa hlavného kontajnera počas celej životnosti podu. Nie je hlavným aplikáciou, ale dopĺňa ju.
+
+Použitie:
+```
+Logging (napr. posielanie logov do centralizovaného systému)
+Proxy / service mesh (napr. Istio sidecar pre komunikáciu microservicov)
+Synchronizácia dát alebo zálohovanie
+Monitoring a health check
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sidecar-example
+spec:
+  containers:
+  - name: main-app
+    image: nginx
+  - name: log-collector
+    image: fluentd
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/nginx
+  volumes:
+  - name: logs
+    emptyDir: {}
+```
+
+Vysvetlenie:
+```
+Hlavný nginx kontajner píše logy do zdieľaného volume.
+Sidecar kontajner (Fluentd) ich odtiaľ odosiela do centralizovaného logovacieho systému.
+```
+
+3️⃣ Súvisiace koncepty
+
+Volumes: Init aj sidecar často potrebujú zdieľané storage (emptyDir, ConfigMap, PersistentVolume).
+Probes (liveness/readiness/startup):
+Init container môže zabezpečiť, že hlavný kontajner sa spustí až keď sú všetky predpoklady pripravené.
+Sidecar môže mať vlastné liveness/readiness probe, aby Kubernetes vedel, že je zdravý.
+Ordering: Init containers sa spúšťajú sekvenčne, main container až po nich. Sidecar beží paralelne s hlavnou aplikáciou.
+Resource Limits & Security: Každý kontajner má vlastné limity CPU/memory a môže mať vlastné bezpečnostné nastavenia.
+
+
+
