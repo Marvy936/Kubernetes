@@ -14,20 +14,7 @@
 3. [Kubernetes Secrets](#kubernetes-secrets)
 4. [Creating and Maintaining Cluster](#creating-and-maintaining-cluster)
 5. [Kubernetes GitLab Integration](#kubernetes-gitlab-integration)
-   - [Using kubeconfig as Text Variable](#using-kubeconfig-as-text-variable)
-   - [Using kubeconfig as File Variable](#using-kubeconfig-as-file-variable)
-   - [Using Private Docker Registry](#using-private-docker-registry)
-
 6. [Kubernetes Deployment Examples](#kubernetes-deployment-examples)
-   - [Basic Deployment](#basic-deployment)
-   - [Deployment with Resources and Autoscaling](#deployment-with-resources-and-autoscaling)
-   - [Deployment with Init and Sidecar Containers](#deployment-with-init-and-sidecar-containers)
-   - [Deployment with Probes (Liveness, Readiness, Startup)](#deployment-with-probes-liveness-readiness-startup)
-   - [Deployment with ConfigMap & Secret Environment Variables](#deployment-with-configmap--secret-environment-variables)
-   - [Deployment with Volumes (PVC, emptyDir)](#deployment-with-volumes-pvc-emptydir)
-   - [Deployment with Security Context, NodeSelector, Affinity, Tolerations](#deployment-with-security-context-nodeselector-affinity-tolerations)
-   - [Horizontal Pod Autoscaler Example](#horizontal-pod-autoscaler-example)
-
 7. [Using GitLab Variables in Manifests](#using-gitlab-variables-in-manifests)
    - [Template Example](#template-example-deploymenttemplateyaml)
    - [GitLab CI/CD Integration](#gitlab-cicd-integration)
@@ -524,7 +511,7 @@ spec:
         - containerPort: 80
 ```
 
-## Kubernetes Deployment
+## Kubernetes Deployment Examples
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
