@@ -118,49 +118,6 @@ kubectl rollout status deployment/my-app
 
 ---
 
-### Kubernetes ConfigMap
-
-```bash
-kubectl create configmap {configmap_name} \                # Creates a ConfigMap with specified variables.
-  --from-literal=WEATHER_UPDATE_INTERVAL=30 \      
-  --from-literal=WEATHER_UNITS=standard \
-  --from-literal=WEATHER_QUERY=poprad,sk
-
-kubectl create configmap {configmap_name} --from-env-file yourfile.env # Creates a ConfigMap from a file.
-```
-
-**Example `yourfile.env`**
-```env
-WEATHER_UPDATE_INTERVAL=30
-WEATHER_UNITS=standard 
-WEATHER_QUERY=poprad,sk
-```
-
----
-
-### Kubernetes Secrets
-
-```bash
-kubectl create secret generic {secret_name} --from-literal {VARIABLE_NAME}={VARIABLE_VALUE} # Creates a secret with variables.
-kubectl create secret generic {secret_name} --from-env-file yourfile.env                    # Creates a secret from a file.
-```
-
-### Managing Secrets
-
-```bash
-kubectl get secrets                            # Lists all secrets.
-kubectl describe secrets {secret_name}         # Shows details of a specific secret.
-```
-
-**Base64 Encoding for Secrets**
-
-```bash
-echo -n '{YOUR_VALUE}' | base64                   # Encodes a value to Base64.
-echo -n '{YOUR_VALUE}' | base64 | base64 --decode # Decodes a Base64 value.
-```
-
----
-
 ### Kubernetes Ingress
 
 ```bash
@@ -1102,6 +1059,7 @@ Example:
 path: /contact will only match /contact. It will not match /contact/us.
 Use case: Use this when you have a specific, singular endpoint that you want to route.
 ```
+
 ---
 
 ## Kubernetes ConfigMap
@@ -1142,6 +1100,24 @@ kubectl describe configmaps {configmap_name}  # Shows details of a specific Conf
 kubectl delete configmap {configmap_name}     # Deletes a ConfigMap.
 ```
 
+Manual:
+
+```bash
+kubectl create configmap {configmap_name} \                # Creates a ConfigMap with specified variables.
+  --from-literal=WEATHER_UPDATE_INTERVAL=30 \      
+  --from-literal=WEATHER_UNITS=standard \
+  --from-literal=WEATHER_QUERY=poprad,sk
+
+kubectl create configmap {configmap_name} --from-env-file yourfile.env # Creates a ConfigMap from a file.
+```
+
+**Example `yourfile.env`**
+```env
+WEATHER_UPDATE_INTERVAL=30
+WEATHER_UNITS=standard 
+WEATHER_QUERY=poprad,sk
+```
+
 ---
 
 ## Kubernetes Secrets
@@ -1178,6 +1154,7 @@ stringData:
   username: admin
   password: s3cr3t_p@ss
 ```
+
 ---
 
 ## Executing Commands on Startup / Shutdown
