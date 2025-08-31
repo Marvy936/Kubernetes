@@ -1,25 +1,93 @@
+# Table of Contents
 
-# Kubernetes Notes
+1. [Useful Commands](#useful-commands)
+   - [General Commands](#general-commands)
+   - [Kubernetes Pods](#kubernetes-pods)
+   - [Kubernetes Deployments](#kubernetes-deployments)
+   - [Kubernetes Services](#kubernetes-services)
+   - [Kubernetes Labels](#kubernetes-labels)
+   - [Kubernetes Namespaces](#kubernetes-namespaces)
+   - [Kubernetes Manifest](#kubernetes-manifest)
+   - [Kubernetes Rollback](#kubernetes-rollback)
 
-## Table of Contents
-1. [General Commands](#general-commands)
-2. [Kubernetes Pods](#kubernetes-pods)
-3. [Kubernetes Deployments](#kubernetes-deployments)
-4. [Kubernetes Services](#kubernetes-services)
-5. [Kubernetes Labels](#kubernetes-labels)
-6. [Kubernetes Namespaces](#kubernetes-namespaces)
-7. [Kubernetes Manifest, Variables, and Secrets](#kubernetes-manifest)
-8. [Kubernetes ConfigMap](#kubernetes-configmap)
-9. [Kubernetes Secrets](#kubernetes-secrets)
-10. [Kubernetes Ingress](#kubernetes-ingress)
-11. [Kubernetes Persistent Volumes and Claims (PV, PVC)](#kubernetes-persistent-volumes-and-claims-pv-pvc)
-12. [Examples](#examples)
+2. [Kubernetes ConfigMap](#kubernetes-configmap)
+   - [Creating ConfigMaps](#creating-configmaps)
+   - [Using ConfigMaps in Deployments](#using-configmaps-in-deployments)
+   - [Managing ConfigMaps](#managing-configmaps)
+
+3. [Kubernetes Secrets](#kubernetes-secrets)
+   - [Creating Secrets](#creating-secrets)
+   - [Managing Secrets](#managing-secrets)
+   - [Base64 Encoding for Secrets](#base64-encoding-for-secrets)
+
+4. [Creating and Maintaining Cluster](#creating-and-maintaining-cluster)
+   - [Scenario Overview](#scenario-overview)
+   - [Preparing VMs](#preparing-vms)
+   - [Installing Container Runtime](#installing-container-runtime)
+   - [Installing kubeadm, kubelet, kubectl](#installing-kubeadm-kubelet-kubectl)
+   - [Initialize Control Plane](#initialize-control-plane)
+   - [Install Network Plugin](#install-network-plugin)
+   - [Join Worker Node](#join-worker-node)
+   - [Verify Cluster](#verify-cluster)
+   - [Networking and Firewall](#networking-and-firewall)
+     - [Required Kubernetes Ports](#required-kubernetes-ports)
+     - [Cloud Firewall / Security Groups](#cloud-firewall--security-groups)
+     - [Optional External Access](#optional-external-access)
+     - [Single Node Cluster Consideration](#single-node-cluster-consideration)
+
+5. [Kubernetes GitLab Integration](#kubernetes-gitlab-integration)
+   - [Using kubeconfig as Text Variable](#using-kubeconfig-as-text-variable)
+   - [Using kubeconfig as File Variable](#using-kubeconfig-as-file-variable)
+   - [Using Private Docker Registry](#using-private-docker-registry)
+
+6. [Kubernetes Deployment Examples](#kubernetes-deployment-examples)
+   - [Basic Deployment](#basic-deployment)
+   - [Deployment with Resources and Autoscaling](#deployment-with-resources-and-autoscaling)
+   - [Deployment with Init and Sidecar Containers](#deployment-with-init-and-sidecar-containers)
+   - [Deployment with Probes (Liveness, Readiness, Startup)](#deployment-with-probes-liveness-readiness-startup)
+   - [Deployment with ConfigMap & Secret Environment Variables](#deployment-with-configmap--secret-environment-variables)
+   - [Deployment with Volumes (PVC, emptyDir)](#deployment-with-volumes-pvc-emptydir)
+   - [Deployment with Security Context, NodeSelector, Affinity, Tolerations](#deployment-with-security-context-nodeselector-affinity-tolerations)
+   - [Horizontal Pod Autoscaler Example](#horizontal-pod-autoscaler-example)
+
+7. [Using GitLab Variables in Manifests](#using-gitlab-variables-in-manifests)
+   - [Template Example](#template-example-deploymenttemplateyaml)
+   - [GitLab CI/CD Integration](#gitlab-cicd-integration)
+
+8. [Kubernetes Volumes](#kubernetes-volumes)
+   - [Ephemeral Volumes](#ephemeral-volumes)
+   - [Persistent Volumes](#persistent-volumes)
+   - [StorageClass and Dynamic Provisioning](#storageclass-and-dynamic-provisioning)
+   - [Overview of Supported Storage Backends](#overview-of-supported-storage-backends)
+     - [Local](#local)
+     - [Network](#network)
+     - [Cloud](#cloud)
+
+9. [Kubernetes Services](#kubernetes-services-1)
+   - [ClusterIP](#clusterip)
+   - [NodePort](#nodeport)
+   - [LoadBalancer](#loadbalancer)
+   - [ExternalName](#externalname)
+   - [Ingress](#ingress)
+     - [Path-Based Routing](#path-based-routing)
+     - [PathType (Prefix, Exact)](#pathtype-prefix-exact)
+
+10. [Executing Commands on Startup / Shutdown](#executing-commands-on-startup--shutdown)
+    - [Command and Args](#command-and-args)
+    - [Lifecycle Hooks (postStart, preStop)](#lifecycle-hooks-poststart-prestop)
+
+11. [Verifying Readiness with Probes](#verifying-readiness-with-probes)
+    - [Readiness Probe](#readiness-probe)
+    - [Liveness Probe](#liveness-probe)
+
+12. [Kubernetes StatefulSet](#kubernetes-statefulset)
+    - [Headless Service](#headless-service)
+    - [StatefulSet Manifest with PVCs](#statefulset-manifest-with-pvcs)
 
 ---
 
 ## Useful Commands
 ### General Commands
-
 
 ```bash
 kubectl version                            # Shows installed version of kubectl.
@@ -479,7 +547,452 @@ spec:
 ```
 
 ## Kubernetes Deployment
-ADD
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-resources
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:     # minimálne zdroje
+            cpu: "100m"
+            memory: "128Mi"
+          limits:       # maximálne zdroje
+            cpu: "500m"
+            memory: "256Mi"
+```
+```yaml
+#Funguje s deploymentom hore.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-resources
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70   # keď CPU >70%, pridá repliky
+```
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-big-demo
+  labels:
+    app: nginx
+spec:
+  replicas: 3   # ✅ počet replík
+  strategy:     # ✅ stratégia nasadzovania
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1  # koľko podov môže byť naraz dole
+      maxSurge: 1        # koľko nových podov môže pribudnúť
+
+  selector:
+    matchLabels:
+      app: nginx
+
+  template:
+    metadata:
+      labels:
+        app: nginx
+      annotations:
+        prometheus.io/scrape: "true"   # ✅ príklad pre monitoring
+        prometheus.io/port: "80"
+
+    spec:
+      # ✅ Init container (beží pred hlavnými kontajnermi)
+      initContainers:
+      - name: init-myservice
+        image: busybox
+        command: ['sh', '-c', 'echo Initializing... && sleep 5']
+
+      # ✅ Sidecar container (spolu s hlavným kontajnerom)
+      containers:
+      - name: nginx
+        image: nginx:1.25
+        imagePullPolicy: IfNotPresent  # Always/IfNotPresent/Never
+        ports:
+        - containerPort: 80
+
+        # ✅ Health checks
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+        startupProbe:
+          httpGet:
+            path: /
+            port: 80
+          failureThreshold: 30
+          periodSeconds: 10
+
+        # ✅ Resources
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+
+        # ✅ Env variables (ConfigMap + Secret)
+        env:
+        - name: WELCOME_MSG
+          valueFrom:
+            configMapKeyRef:
+              name: nginx-config
+              key: WELCOME_MSG
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nginx-secret
+              key: PASSWORD
+
+        # ✅ Mount storage
+        volumeMounts:
+        - name: nginx-data
+          mountPath: /usr/share/nginx/html
+
+      # ✅ Sidecar – log collector
+      - name: log-collector
+        image: busybox
+        command: ['sh', '-c', 'tail -n+1 -F /var/log/nginx/access.log']
+        volumeMounts:
+        - name: nginx-logs
+          mountPath: /var/log/nginx
+
+      # ✅ Security context na úrovni Podu
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 3000
+        fsGroup: 2000
+
+      # ✅ Scheduler hints
+      nodeSelector:
+        disktype: ssd
+
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: disktype
+                operator: In
+                values:
+                - ssd
+
+      tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "nginx"
+        effect: "NoSchedule"
+
+      serviceAccountName: nginx-serviceaccount  # ✅ RBAC service account
+
+      volumes:
+      - name: nginx-data
+        persistentVolumeClaim:
+          claimName: pvc-nginx
+      - name: nginx-logs
+        emptyDir: {}   # logy sú len ephemeral
+
+---
+# ✅ ConfigMap (na env var)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  WELCOME_MSG: "Hello from ConfigMap"
+
+---
+# ✅ Secret (na heslo)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nginx-secret
+type: Opaque
+data:
+  PASSWORD: c2VjcmV0   # base64("secret")
+
+---
+# ✅ PersistentVolumeClaim (pre nginx html dáta)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nginx
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+
+---
+# ✅ Horizontal Pod Autoscaler (HPA)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-big-demo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 75
+
+```
+## How to USE Gitlab Variables in manifest.
+
+deployment.template.yaml:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $APP_NAME
+spec:
+  replicas: $REPLICAS
+  template:
+    metadata:
+      labels:
+        app: $APP_NAME
+    spec:
+      containers:
+      - name: $APP_NAME
+        image: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+```
+gitlab-ci.yml
+```yaml
+deploy:
+  stage: deploy
+  script:
+    - envsubst < k8s/deployment.yaml.template > k8s/deployment.yaml
+    - kubectl apply -f k8s/deployment.yaml
+```
+
+## Kubernetes Volumes
+
+1. Ephemeral (dočasné) volumes
+
+Používajú sa, keď nepotrebuješ uchovať dáta po zániku Podu.
+```
+emptyDir – vytvorí prázdny adresár na node, zmizne po zmazaní Podu.
+ephemeral volume (CSI inline) – krátkodobý volume od storage drivera (napr. pre testy).
+```
+
+emptyDir:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-emptydir
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: [ "sleep", "3600" ]
+    volumeMounts:
+    - name: temp-storage
+      mountPath: /tmp/data
+  volumes:
+  - name: temp-storage
+    emptyDir: {}
+```
+
+2. Persistent Volumes (trvalé dáta)
+
+Keď dáta musia prežiť reštart podu alebo jeho presun.
+Používa sa kombinácia:
+```
+PersistentVolume (PV) – zdroj storage v clustri (napr. disk, NFS, cloud storage).
+PersistentVolumeClaim (PVC) – žiadosť podu o konkrétny storage.
+```
+Pod takto nemusí vedieť detaily o tom, kde storage fyzicky je.
+I have to create PV then Clam it with PVC and I have to mention storage under Pod.
+
+hostPath:
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-hostpath
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data   # 📍 toto je cesta na NODE (host machine)
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-hostpath
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-hostpath
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: [ "sleep", "3600" ]
+    volumeMounts:
+    - name: storage
+      mountPath: /data   # 📍 toto je cesta VO VNÚTRI kontajnera
+  volumes:
+  - name: storage
+    persistentVolumeClaim:
+      claimName: pvc-hostpath
+```
+NFS:
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: 10.0.0.100   # IP NFS servera
+    path: /exports/data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nfs
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-nfs
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: [ "sleep", "3600" ]
+    volumeMounts:
+    - name: nfs-storage
+      mountPath: /mnt/nfs
+  volumes:
+  - name: nfs-storage
+    persistentVolumeClaim:
+      claimName: pvc-nfs
+```
+StorageClass + Dynamic provisioning (cloud / CSI):
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-dynamic
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-dynamic
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: [ "sleep", "3600" ]
+    volumeMounts:
+    - name: dynamic-storage
+      mountPath: /data
+  volumes:
+  - name: dynamic-storage
+    persistentVolumeClaim:
+      claimName: pvc-dynamic
+```
+
+Kubernetes podporuje množstvo backendov (storage pluginov):
+
+Lokálne riešenia
+```
+hostPath – mount lokálneho adresára z node (nevhodné pre produkciu).
+local – lepšie riešenie, viaže PV na konkrétny node (pre high-performance storage).
+```
+Sieťové riešenia
+```
+NFS – klasický network filesystem.
+iSCSI – block-level storage.
+CephFS, RBD (Ceph block storage).
+GlusterFS.
+Fibre Channel.
+```
+Cloud storage (väčšinou ako CSI drivere)
+```
+AWS – EBS, EFS, FSx.
+GCP – Persistent Disk, Filestore.
+Azure – Disk, File.
+OpenStack Cinder.
+```
+
 ## Kubernetes Services
 
 ```bash
@@ -821,4 +1334,74 @@ spec:
             port: 8080
     	initialDelaySeconds: 15
     	periodSeconds: 20
+```
+## Kubernetes StatefulSet Explained
+
+A StatefulSet is designed for applications that require stable storage and network identities. This example demonstrates how it provides a unique identity and ties a persistent volume to each pod.
+
+1. The Headless Service
+
+The StatefulSet relies on a headless service to provide the stable network identity for each pod. A headless service has no ClusterIP and acts as a DNS record for the pods it controls.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  # A headless service has no ClusterIP, it only provides DNS records.
+  # This is a requirement for StatefulSets.
+  clusterIP: None 
+  selector:
+    app: nginx-statefulset
+  ports:
+  - port: 80
+    name: web
+  # The service must have the same name as the StatefulSet.
+  # The domain name will be ..default.svc.cluster.local
+  # Example: nginx-0.nginx-service.default.svc.cluster.local
+  # This provides the stable, unique network identity for each pod.
+```
+
+2. The StatefulSet Manifest
+
+This is the main manifest for our stateful application. It specifies the number of replicas, the pod template, and the volume claim template for persistent storage.
+
+```yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nginx-statefulset
+spec:
+  selector:
+    matchLabels:
+      app: nginx-statefulset
+  serviceName: "nginx-service" # This must match the name of the headless service.
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: nginx-statefulset
+    spec:
+      containers:
+      - name: nginx-web
+        image: k8s.gcr.io/nginx-slim:0.8
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www-data
+          mountPath: /usr/share/nginx/html
+  
+  # This template creates a PersistentVolumeClaim for each pod.
+  # The PVC will be named -
+  # Example: www-data-nginx-statefulset-0
+  volumeClaimTemplates:
+  - metadata:
+      name: www-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
 ```
