@@ -16,38 +16,11 @@
 5. [Kubernetes GitLab Integration](#kubernetes-gitlab-integration)
 6. [Kubernetes Deployment Examples](#kubernetes-deployment-examples)
 7. [Using GitLab Variables in Manifests](#using-gitlab-variables-in-manifests)
-   - [Template Example](#template-example-deploymenttemplateyaml)
-   - [GitLab CI/CD Integration](#gitlab-cicd-integration)
-
 8. [Kubernetes Volumes](#kubernetes-volumes)
-   - [Ephemeral Volumes](#ephemeral-volumes)
-   - [Persistent Volumes](#persistent-volumes)
-   - [StorageClass and Dynamic Provisioning](#storageclass-and-dynamic-provisioning)
-   - [Overview of Supported Storage Backends](#overview-of-supported-storage-backends)
-     - [Local](#local)
-     - [Network](#network)
-     - [Cloud](#cloud)
-
 9. [Kubernetes Services](#kubernetes-services-1)
-   - [ClusterIP](#clusterip)
-   - [NodePort](#nodeport)
-   - [LoadBalancer](#loadbalancer)
-   - [ExternalName](#externalname)
-   - [Ingress](#ingress)
-     - [Path-Based Routing](#path-based-routing)
-     - [PathType (Prefix, Exact)](#pathtype-prefix-exact)
-
 10. [Executing Commands on Startup / Shutdown](#executing-commands-on-startup--shutdown)
-    - [Command and Args](#command-and-args)
-    - [Lifecycle Hooks (postStart, preStop)](#lifecycle-hooks-poststart-prestop)
-
 11. [Verifying Readiness with Probes](#verifying-readiness-with-probes)
-    - [Readiness Probe](#readiness-probe)
-    - [Liveness Probe](#liveness-probe)
-
 12. [Kubernetes StatefulSet](#kubernetes-statefulset)
-    - [Headless Service](#headless-service)
-    - [StatefulSet Manifest with PVCs](#statefulset-manifest-with-pvcs)
 
 ---
 
@@ -750,7 +723,7 @@ spec:
         averageUtilization: 75
 
 ```
-## How to USE Gitlab Variables in manifest.
+## Using GitLab Variables in Manifests
 
 deployment.template.yaml:
 ```yaml
@@ -1216,7 +1189,7 @@ stringData:
 ```
 ---
 
-## Executing Commands on Startup or Before Shutdown
+## Executing Commands on Startup / Shutdown
 
 Kubernetes has a few different ways to run commands within a container at key moments.
 The most common way is to define the entry point and arguments for your container directly in your Deployment manifest.
@@ -1300,7 +1273,7 @@ spec:
     	initialDelaySeconds: 15
     	periodSeconds: 20
 ```
-## Kubernetes StatefulSet Explained
+## Kubernetes StatefulSet
 
 A StatefulSet is designed for applications that require stable storage and network identities. This example demonstrates how it provides a unique identity and ties a persistent volume to each pod.
 
