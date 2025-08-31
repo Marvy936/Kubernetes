@@ -11,30 +11,8 @@
    - [Kubernetes Rollback](#kubernetes-rollback)
 
 2. [Kubernetes ConfigMap](#kubernetes-configmap)
-   - [Creating ConfigMaps](#creating-configmaps)
-   - [Using ConfigMaps in Deployments](#using-configmaps-in-deployments)
-   - [Managing ConfigMaps](#managing-configmaps)
-
 3. [Kubernetes Secrets](#kubernetes-secrets)
-   - [Creating Secrets](#creating-secrets)
-   - [Managing Secrets](#managing-secrets)
-   - [Base64 Encoding for Secrets](#base64-encoding-for-secrets)
-
 4. [Creating and Maintaining Cluster](#creating-and-maintaining-cluster)
-   - [Scenario Overview](#scenario-overview)
-   - [Preparing VMs](#preparing-vms)
-   - [Installing Container Runtime](#installing-container-runtime)
-   - [Installing kubeadm, kubelet, kubectl](#installing-kubeadm-kubelet-kubectl)
-   - [Initialize Control Plane](#initialize-control-plane)
-   - [Install Network Plugin](#install-network-plugin)
-   - [Join Worker Node](#join-worker-node)
-   - [Verify Cluster](#verify-cluster)
-   - [Networking and Firewall](#networking-and-firewall)
-     - [Required Kubernetes Ports](#required-kubernetes-ports)
-     - [Cloud Firewall / Security Groups](#cloud-firewall--security-groups)
-     - [Optional External Access](#optional-external-access)
-     - [Single Node Cluster Consideration](#single-node-cluster-consideration)
-
 5. [Kubernetes GitLab Integration](#kubernetes-gitlab-integration)
    - [Using kubeconfig as Text Variable](#using-kubeconfig-as-text-variable)
    - [Using kubeconfig as File Variable](#using-kubeconfig-as-file-variable)
@@ -428,7 +406,7 @@ For running only single node cluster you have to remove taint from master node:
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 
-## Kubernetes Gitlab connect to cluster
+## Kubernetes GitLab Integration
 
 ```
 You need kubeconfig file and store it as variable in GITLAB $KUBE_CONFIG.
