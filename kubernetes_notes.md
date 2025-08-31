@@ -1,14 +1,14 @@
 # Table of Contents
 
 1. [Useful Commands](#useful-commands)
-2. [Kubernetes ConfigMap](#kubernetes-configmap)
-3. [Kubernetes Secrets](#kubernetes-secrets)
-4. [Creating and Maintaining Cluster](#creating-and-maintaining-cluster)
-5. [Kubernetes GitLab Integration](#kubernetes-gitlab-integration)
-6. [Kubernetes Deployment Examples](#kubernetes-deployment-examples)
-7. [Using GitLab Variables in Manifests](#using-gitlab-variables-in-manifests)
-8. [Kubernetes Volumes](#kubernetes-volumes)
-9. [Kubernetes Services](#kubernetes-services-1)
+2. [Creating and Maintaining Cluster](#creating-and-maintaining-cluster)
+3. [Kubernetes GitLab Integration](#kubernetes-gitlab-integration)
+4. [Kubernetes Deployment Examples](#kubernetes-deployment-examples)
+5. [Using GitLab Variables in Manifests](#using-gitlab-variables-in-manifests)
+6. [Kubernetes Volumes](#kubernetes-volumes)
+7. [Kubernetes Services](#kubernetes-services-1)
+8. [Kubernetes ConfigMap](#kubernetes-configmap)
+9. [Kubernetes Secrets](#kubernetes-secrets)
 10. [Executing Commands on Startup / Shutdown](#executing-commands-on-startup--shutdown)
 11. [Verifying Readiness with Probes](#verifying-readiness-with-probes)
 12. [Kubernetes StatefulSet](#kubernetes-statefulset)
@@ -107,7 +107,7 @@ kubectl set env deployment/{deployment_name} {VARIABLE_NAME}={VARIABLE_VALUE} # 
 
 ---
 
-## Kubernetes Rollback
+### Kubernetes Rollback
 
 ```bash
 kubectl rollout history deployment/my-app
@@ -1104,7 +1104,7 @@ Use case: Use this when you have a specific, singular endpoint that you want to 
 ```
 ---
 
-### Creating and using ConfigMap in a Manifest
+## Kubernetes ConfigMap
 
 ```yaml
 apiVersion: v1
