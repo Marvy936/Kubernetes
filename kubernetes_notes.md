@@ -1,15 +1,6 @@
 # Table of Contents
 
 1. [Useful Commands](#useful-commands)
-   - [General Commands](#general-commands)
-   - [Kubernetes Pods](#kubernetes-pods)
-   - [Kubernetes Deployments](#kubernetes-deployments)
-   - [Kubernetes Services](#kubernetes-services)
-   - [Kubernetes Labels](#kubernetes-labels)
-   - [Kubernetes Namespaces](#kubernetes-namespaces)
-   - [Kubernetes Manifest](#kubernetes-manifest)
-   - [Kubernetes Rollback](#kubernetes-rollback)
-
 2. [Kubernetes ConfigMap](#kubernetes-configmap)
 3. [Kubernetes Secrets](#kubernetes-secrets)
 4. [Creating and Maintaining Cluster](#creating-and-maintaining-cluster)
@@ -24,7 +15,7 @@
 
 ---
 
-## Useful Commands
+## 1. Useful Commands
 ### General Commands
 
 ```bash
