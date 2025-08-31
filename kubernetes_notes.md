@@ -697,7 +697,16 @@ deploy:
   script:
     - envsubst < k8s/deployment.yaml.template > k8s/deployment.yaml
     - kubectl apply -f k8s/deployment.yaml
+
+    alebo
+
+    - kubectl create secret generic db-secret \
+      --from-literal=username=$DB_USER \
+      --from-literal=password=$DB_PASS
+    - kubectl apply -f k8s/deployment.yaml
 ```
+
+Takto s commandom ked si vytvorim secret tak zoberie Variabilne z Gitlab.
 
 ## Kubernetes Volumes
 
