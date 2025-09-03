@@ -398,17 +398,6 @@ Example:
 Manifest Example:
 
 ```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-private-registry-secret
-  namespace: <tvoj-namespace>
-type: kubernetes.io/dockerconfigjson
-data:
-  .dockerconfigjson: "$DOCKER_AUTH_JSON"
-```
-
-```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
